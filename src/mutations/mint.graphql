@@ -1,5 +1,5 @@
-mutation MintDrop {
-  mint {
+mutation MintDrop($drop: ID!) {
+  mint(drop: $drop) {
     address
   }
 }

@@ -1,30 +1,49 @@
 "use client";
 import Image from "next/image";
 import { useMemo } from "react";
-import { Holder } from "@/graphql.types";
-import { shorten } from "../modules/wallet";
+import { Holder, Drop as DropType } from "@/graphql.types";
+import { shorten } from "@/modules/wallet";
 import { MintDrop } from "@/mutations/mint.graphql";
-import { useApolloClient, useMutation, useQuery } from "@apollo/client";
-import { GetDrop } from "@/queries/drop.graphql";
+import { useMutation, useQuery } from "@apollo/client";
+import { GetDrop, GetDrops } from "@/queries/drop.graphql";
 import BounceLoader from "react-spinners/BounceLoader";
 import Link from "next/link";
 import clsx from "clsx";
-import { drop, isNil, not, pipe } from "ramda";
+import { isNil, not, pipe } from "ramda";
 import useMe from "@/hooks/useMe";
 import { Session } from "next-auth";
 import { CheckIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
 
 interface MintData {
   mint: string;
 }
 
-interface HomeProps {
+interface DropProps {
   session?: Session | null;
+  drop: string;
 }
 
-export default function Home({ session }: HomeProps) {
+interface GetDropData {
+  drop: DropType;
+}
+
+interface GetDropVars {
+  id: string;
+}
+
+interface MintVars {
+  drop: string;
+}
+
+export default function Drop({ session, drop }: DropProps) {
   const me = useMe();
-  const dropQuery = useQuery(GetDrop);
+  const router = useRouter();
+  const dropQuery = useQuery<GetDropData, GetDropVars>(GetDrop, {
+    variables: {
+      id: drop,
+    },
+  });
   const collection = dropQuery.data?.drop.collection;
   const metadataJson = collection?.metadataJson;
   const holder = useMemo(() => {
@@ -33,48 +52,26 @@ export default function Home({ session }: HomeProps) {
     );
   }, [collection?.holders, me?.wallet]);
   const owns = pipe(isNil, not)(holder);
-  const [mint, { loading }] = useMutation<MintData>(MintDrop, {
+  const [mint, { loading }] = useMutation<MintData, MintVars>(MintDrop, {
     awaitRefetchQueries: true,
     refetchQueries: [
       {
-        query: GetDrop,
+        query: GetDrops,
       },
     ],
   });
 
   const onMint = () => {
-    mint();
+    mint({
+      variables: { drop },
+      onCompleted: () => {
+        router.push(`/`);
+      },
+    });
   };
 
   return (
     <>
-      <div className="flex w-full justify-between items-center py-4">
-        <Image src="/img/logo.png" alt="site logo" width={199} height={18} />
-        {!me ? (
-          <>
-            <div className="flex gap-1 md:gap-4 items-center">
-              <Link
-                href="/login"
-                className="text-cta font-medium md:font-bold md:border-2 md:rounded-full md:border-cta md:py-3 md:px-6"
-              >
-                Log in
-              </Link>
-              <span className="text-gray-300 font-medium md:hidden">or</span>
-              <Link
-                href="/login"
-                className="text-cta font-medium md:text-backdrop md:bg-cta md:rounded-full md:font-bold md:py-3 md:px-6"
-              >
-                Sign up
-              </Link>
-            </div>
-          </>
-        ) : (
-          <button className="text-cta font-bold border-2 rounded-full border-cta py-3 px-6 flex gap-2">
-            <img className="w-6 h-6 rounded-full" src={me?.image as string} />
-            <span>{me?.name}</span>
-          </button>
-        )}
-      </div>
       <div className="w-full grid grid-cols-12  md:gap-4 lg:gap-12 mt-4 md:mt-10 lg:mt-16">
         <div className="col-span-12 md:col-span-6">
           {dropQuery.loading ? (

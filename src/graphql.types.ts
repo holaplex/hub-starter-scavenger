@@ -857,6 +857,11 @@ export type MutationInviteMemberArgs = {
 };
 
 
+export type MutationMintArgs = {
+  drop: Scalars['ID'];
+};
+
+
 export type MutationMintEditionArgs = {
   input: MintDropInput;
 };
@@ -1112,6 +1117,7 @@ export type Purchase = {
 export type Query = {
   __typename?: 'Query';
   drop?: Maybe<Drop>;
+  drops?: Maybe<Array<Drop>>;
   /**
    * Returns a list of event types that an external service can subscribe to.
    *
@@ -1133,6 +1139,11 @@ export type Query = {
   project?: Maybe<Project>;
   /** Retrieve a user identity by providing their ID. */
   user?: Maybe<User>;
+};
+
+
+export type QueryDropArgs = {
+  id: Scalars['ID'];
 };
 
 
@@ -1396,6 +1407,7 @@ export type ResolversTypes = {
   EventType: ResolverTypeWrapper<EventType>;
   FilterType: FilterType;
   Holder: ResolverTypeWrapper<Holder>;
+  ID: ResolverTypeWrapper<Scalars['ID']>;
   Int: ResolverTypeWrapper<Scalars['Int']>;
   Invite: ResolverTypeWrapper<Invite>;
   InviteMemberInput: InviteMemberInput;
@@ -1479,6 +1491,7 @@ export type ResolversParentTypes = {
   EditWebhookPayload: EditWebhookPayload;
   EventType: EventType;
   Holder: Holder;
+  ID: Scalars['ID'];
   Int: Scalars['Int'];
   Invite: Invite;
   InviteMemberInput: InviteMemberInput;
@@ -1783,7 +1796,7 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
   editProject?: Resolver<ResolversTypes['EditProjectPayload'], ParentType, ContextType, RequireFields<MutationEditProjectArgs, 'input'>>;
   editWebhook?: Resolver<ResolversTypes['EditWebhookPayload'], ParentType, ContextType, RequireFields<MutationEditWebhookArgs, 'input'>>;
   inviteMember?: Resolver<ResolversTypes['Invite'], ParentType, ContextType, RequireFields<MutationInviteMemberArgs, 'input'>>;
-  mint?: Resolver<Maybe<ResolversTypes['CollectionMint']>, ParentType, ContextType>;
+  mint?: Resolver<Maybe<ResolversTypes['CollectionMint']>, ParentType, ContextType, RequireFields<MutationMintArgs, 'drop'>>;
   mintEdition?: Resolver<ResolversTypes['MintEditionPayload'], ParentType, ContextType, RequireFields<MutationMintEditionArgs, 'input'>>;
   patchDrop?: Resolver<ResolversTypes['PatchDropPayload'], ParentType, ContextType, RequireFields<MutationPatchDropArgs, 'input'>>;
   pauseDrop?: Resolver<ResolversTypes['PauseDropPayload'], ParentType, ContextType, RequireFields<MutationPauseDropArgs, 'input'>>;
@@ -1862,7 +1875,8 @@ export type PurchaseResolvers<ContextType = any, ParentType extends ResolversPar
 };
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
-  drop?: Resolver<Maybe<ResolversTypes['Drop']>, ParentType, ContextType>;
+  drop?: Resolver<Maybe<ResolversTypes['Drop']>, ParentType, ContextType, RequireFields<QueryDropArgs, 'id'>>;
+  drops?: Resolver<Maybe<Array<ResolversTypes['Drop']>>, ParentType, ContextType>;
   eventTypes?: Resolver<Array<ResolversTypes['EventType']>, ParentType, ContextType>;
   invite?: Resolver<Maybe<ResolversTypes['Invite']>, ParentType, ContextType, RequireFields<QueryInviteArgs, 'id'>>;
   me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;

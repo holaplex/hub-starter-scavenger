@@ -16,7 +16,7 @@ import { Session } from "next-auth";
 import { MintNft } from "@/mutations/drop.graphql";
 import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
-import { GetProjectDrop } from "@/queries/project.graphql";
+import { GetProjectDrop, GetProjectDrops } from "@/queries/project.graphql";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import UserSource from "@/modules/user";
 import holaplex from "@/modules/holaplex";
@@ -46,18 +46,37 @@ interface GetDropVars {
   drop: string;
 }
 
+interface GetDropsData {
+  project: Pick<Project, "drops">;
+}
+
+interface GetDropsVars {
+  project: string;
+}
+
 export const queryResolvers: QueryResolvers<AppContext> = {
-  async drop(_a, _b, { dataSources: { holaplex } }) {
+  async drop(_a, { id }, { dataSources: { holaplex } }) {
     const { data } = await holaplex.query<GetDropData, GetDropVars>({
       fetchPolicy: "network-only",
       query: GetProjectDrop,
       variables: {
         project: process.env.HOLAPLEX_PROJECT_ID as string,
-        drop: process.env.HOLAPLEX_DROP_ID as string,
+        drop: id,
       },
     });
 
     return data.project.drop as Drop;
+  },
+  async drops(_a, _vars, { dataSources: { holaplex } }) {
+    const { data } = await holaplex.query<GetDropsData, GetDropsVars>({
+      fetchPolicy: "network-only",
+      query: GetProjectDrops,
+      variables: {
+        project: process.env.HOLAPLEX_PROJECT_ID as string,
+      },
+    });
+
+    return data.project.drops as Drop[];
   },
   async me(_a, _b, { session, dataSources: { user } }) {
     if (!session) {
@@ -83,7 +102,7 @@ interface MintNftVars {
 }
 
 const mutationResolvers: MutationResolvers<AppContext> = {
-  async mint(_a, _b, { session, dataSources: { db, holaplex } }) {
+  async mint(_a, { drop }, { session, dataSources: { db, holaplex } }) {
     if (!session) {
       return null;
     }
@@ -100,7 +119,7 @@ const mutationResolvers: MutationResolvers<AppContext> = {
       mutation: MintNft,
       variables: {
         input: {
-          drop: process.env.HOLAPLEX_DROP_ID as string,
+          drop,
           recipient: wallet?.address as string,
         },
       },

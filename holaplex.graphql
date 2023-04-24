@@ -880,7 +880,7 @@ type Mutation {
   This mutation will produce an error if it is unable to connect to the database or if there is no associated user set in the X-USER-ID header.
   """
   inviteMember(input: InviteMemberInput!): Invite!
-  mint: CollectionMint
+  mint(drop: ID!): CollectionMint
 
   """
   This mutation mints an NFT edition for a specific drop ID. The mint returns immediately with a creation status of CREATING. You can [set up a webhook](https://docs.holaplex.dev/hub/For%20Developers/webhooks-overview) to receive a notification when the mint is accepted by the blockchain.
@@ -1192,7 +1192,8 @@ type Purchase {
 }
 
 type Query {
-  drop: Drop
+  drop(id: ID!): Drop
+  drops: [Drop!]
 
   """
   Returns a list of event types that an external service can subscribe to.

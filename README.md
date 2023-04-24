@@ -1,6 +1,6 @@
-# Holaplex Hub Starter
+# Holaplex Hub Starter Scavenger Hunt
 
-A template repository to help you build NFT based applications using Holaplex Hub.
+An example scavenger hunt activation built using the Holaplex Hub API.
 
 Includes:
 
@@ -10,6 +10,13 @@ Includes:
 - Style application using Tailwind
 - Holaplex Hub SDK
 
+## Features
+
+- Custodial wallet per user
+- Minting drops to custodial wallet
+- Displaying all drops associated to a project
+- Displaying ownership status of a drop
+
 ## Folder Structure
 
 ```
@@ -18,8 +25,12 @@ Includes:
   /migrations # prisma auto-generated migration files
 /src
  /app # next js app directory
+  (session)
+    /drops
+      /[drop]
+        page.tsx # drop page
+    page.tsx # home page
   /login # social sign up or login
-  page.tsx # home page
  /pages
    /api # next js api routes
     graphql.ts # apps graphql server
@@ -30,6 +41,7 @@ Includes:
  /mutations # holaplex and app api mutations
  tailwind.config.js # color theme
 ```
+
 ## Getting Started
 
 Ensure you have nodejs and docker installed on your workstation.
@@ -68,6 +80,7 @@ POSTGRES_PASSWORD=holaplex
 HOLAPLEX_API_ENDPOINT=https://api.holaplex.com/graphql
 # https://docs.holaplex.dev/api
 HOLAPLEX_AUTH_TOKEN=
+HOLAPLEX_PROJECT_ID=
 ```
 
 ### Migrations
@@ -75,9 +88,11 @@ HOLAPLEX_AUTH_TOKEN=
 Follow the [Prisma guide](https://www.prisma.io/docs/guides/database/developing-with-prisma-migrate) on adjusting the database through migrations. Once the Prisma schema has been adjusted run `npm run migrate`.
 
 ## Release
+
 The starter is designed to be deployed to [render](https://render.com) using their Infrastructure as Code (IaC) configuration file [render.yaml](/render.yaml). The IaC manifest will set up a web server for the mint page and a database for storing users, sessions, and wallets.
 
 ### Database
+
 After deploying the environment, access the shell of the web server and run the following command to create and set up the database schema:
 
 ```
@@ -85,5 +100,5 @@ npm run db
 ```
 
 ### Environment Variables
-Although the IaC will create placeholder environment variables for the web service, you will need to update them to match your Holaplex account.
 
+Although the IaC will create placeholder environment variables for the web service, you will need to update them to match your Holaplex account.

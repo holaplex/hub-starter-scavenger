@@ -7,6 +7,6 @@ services:
     ports:
       - 5432:5432
     volumes: 
-      - hub-starter:/var/lib/postgresql/data
+      - hub-starter-scavenger:/var/lib/postgresql/data
 volumes:
-  hub-starter:
+  hub-starter-scavenger:

@@ -15,10 +15,11 @@ type User {
 }
 
 type Query {
-  drop: Drop
+  drop(id: ID!): Drop
+  drops: [Drop!]
   me: User
 }
 
 type Mutation {
-  mint: CollectionMint
+  mint(drop: ID!): CollectionMint
 }

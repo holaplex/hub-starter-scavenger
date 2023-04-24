@@ -1,23 +1,32 @@
-query GetDrop {
-  drop {
+fragment DropInfo on Drop {
+  id
+  startTime
+  endTime
+  collection {
     id
-    startTime
-    endTime
-    collection {
-      id
-      totalMints
-      supply
+    totalMints
+    supply
+    address
+    holders {
       address
-      holders {
-        address
-        owns
-      }
-      metadataJson {
-        id
-        image
-        name
-        description
-      }
     }
+    metadataJson {
+      id
+      image
+      name
+      description
+    }
+  }
+}
+
+query GetDrop($id: ID!) {
+  drop(id: $id) {
+    ...DropInfo
+  }
+}
+
+query GetDrops {
+  drops {
+    ...DropInfo
   }
 }
