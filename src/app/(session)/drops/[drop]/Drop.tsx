@@ -85,7 +85,7 @@ export default function Drop({ session, drop }: DropProps) {
           {loadingQueries ? (
             <div className="w-full aspect-square rounded-lg bg-contrast animate-pulse" />
           ) : (
-            <div className="relative w-full aspect-square rounded-log overflow-hidden flex justify-center items-center">
+            <div className="relative w-full aspect-square rounded-lg overflow-hidden flex justify-center items-center">
               <BounceLoader
                 className={clsx(
                   "z-10 transition",
