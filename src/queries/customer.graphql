@@ -11,6 +11,11 @@ query GetCustomerWallet(
         id
         wallet(assetType: $assetType) {
           address
+          mints {
+            id
+            address
+            collectionId
+          }
         }
       }
     }

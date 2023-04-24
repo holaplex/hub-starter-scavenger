@@ -48,7 +48,6 @@ interface CreateCustomerWalletVars {
 
 function customerTreasuryReady(customer: string) {
   return async function checkCustomerTreasuryReady() {
-    console.log("waiting for treasurty to be ready", customer);
     const { data } = await holaplex.query<
       GetCustomerTreasuryData,
       GetCustomerTreasuryVars
@@ -60,8 +59,6 @@ function customerTreasuryReady(customer: string) {
         customer,
       },
     });
-
-    console.log(customer, data);
 
     return data.project.customer?.treasury?.id;
   };

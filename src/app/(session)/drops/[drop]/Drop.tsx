@@ -1,7 +1,7 @@
 "use client";
-import Image from "next/image";
+
 import { useMemo } from "react";
-import { Holder, Drop as DropType } from "@/graphql.types";
+import { Drop as DropType } from "@/graphql.types";
 import { shorten } from "@/modules/wallet";
 import { MintDrop } from "@/mutations/mint.graphql";
 import { useMutation, useQuery } from "@apollo/client";
@@ -9,11 +9,12 @@ import { GetDrop, GetDrops } from "@/queries/drop.graphql";
 import BounceLoader from "react-spinners/BounceLoader";
 import Link from "next/link";
 import clsx from "clsx";
-import { isNil, not, pipe } from "ramda";
+import { isNil, not, path, pipe } from "ramda";
 import useMe from "@/hooks/useMe";
 import { Session } from "next-auth";
+import { GetMe } from "@/queries/me.graphql";
 import { CheckIcon } from "@heroicons/react/24/solid";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface MintData {
   mint: string;
@@ -37,7 +38,6 @@ interface MintVars {
 }
 
 export default function Drop({ session, drop }: DropProps) {
-  const me = useMe();
   const router = useRouter();
   const dropQuery = useQuery<GetDropData, GetDropVars>(GetDrop, {
     variables: {
@@ -46,17 +46,23 @@ export default function Drop({ session, drop }: DropProps) {
   });
   const collection = dropQuery.data?.drop.collection;
   const metadataJson = collection?.metadataJson;
+  const pathname = usePathname();
+  const meQuery = useMe();
+  const me = meQuery.data?.me;
   const holder = useMemo(() => {
-    return collection?.holders?.find(
-      (holder: Holder) => holder.address === me?.wallet?.address
-    );
-  }, [collection?.holders, me?.wallet]);
+    return meQuery.data?.me?.wallet?.mints?.find((mint) => {
+      return mint.collectionId === collection?.id;
+    });
+  }, [collection, meQuery]);
   const owns = pipe(isNil, not)(holder);
   const [mint, { loading }] = useMutation<MintData, MintVars>(MintDrop, {
     awaitRefetchQueries: true,
     refetchQueries: [
       {
         query: GetDrops,
+      },
+      {
+        query: GetMe,
       },
     ],
   });
@@ -70,11 +76,13 @@ export default function Drop({ session, drop }: DropProps) {
     });
   };
 
+  const loadingQueries = dropQuery.loading || meQuery.loading;
+
   return (
     <>
       <div className="w-full grid grid-cols-12  md:gap-4 lg:gap-12 mt-4 md:mt-10 lg:mt-16">
         <div className="col-span-12 md:col-span-6">
-          {dropQuery.loading ? (
+          {loadingQueries ? (
             <div className="w-full aspect-square rounded-lg bg-contrast animate-pulse" />
           ) : (
             <div className="relative w-full aspect-square rounded-log overflow-hidden flex justify-center items-center">
@@ -97,13 +105,13 @@ export default function Drop({ session, drop }: DropProps) {
         <div className="col-span-12 md:col-span-6">
           <div className="flex flex-col items-center md:items-start md:justify-center">
             <span className="text-2xl font-extrabold md:text-xl lg:text-3xl md:font-semibold">
-              {dropQuery.loading ? (
+              {loadingQueries ? (
                 <div className="rounded-full bg-contrast w-60 h-6 animate-pulse" />
               ) : (
                 metadataJson?.name
               )}
             </span>
-            {dropQuery.loading ? (
+            {loadingQueries ? (
               <div className="flex flex-col gap-2 w-full mt-6 md:mt-3">
                 <div className="rounded-full bg-contrast w-full h-4 animate-pulse" />
                 <div className="rounded-full bg-contrast w-full h-4 animate-pulse" />
@@ -116,7 +124,7 @@ export default function Drop({ session, drop }: DropProps) {
             )}
           </div>
           <div className="bg-contrast rounded-lg p-6 flex justify-between mt-8 items-center mb-6">
-            {dropQuery.loading ? (
+            {loadingQueries ? (
               <>
                 <div className="flex flex-row gap-2 items-center">
                   <div className="bg-backdrop w-14 aspect-square rounded-full animate-pulse" />
@@ -132,7 +140,7 @@ export default function Drop({ session, drop }: DropProps) {
                 <div className="flex flex-row items-center gap-2">
                   <img
                     className="w-14 h-14 rounded-full"
-                    src={session?.user?.image as string}
+                    src={me?.image as string}
                   />
 
                   <div className="flex flex-col gap-1 justify-between">
@@ -160,7 +168,7 @@ export default function Drop({ session, drop }: DropProps) {
                   Sign up to claim your NFT
                 </span>
                 <Link
-                  href="/login"
+                  href={`/login?return_to=${pathname}`}
                   className="font-bold rounded-full bg-cta text-contrast py-3 px-6 transition hover:opacity-80"
                 >
                   Claim now

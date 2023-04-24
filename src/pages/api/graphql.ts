@@ -11,6 +11,9 @@ import {
   Project,
   CollectionMint,
   Drop,
+  AssetType,
+  Wallet,
+  CollectorResolvers,
 } from "@/graphql.types";
 import { Session } from "next-auth";
 import { MintNft } from "@/mutations/drop.graphql";
@@ -22,6 +25,7 @@ import UserSource from "@/modules/user";
 import holaplex from "@/modules/holaplex";
 import { loadSchema } from "@graphql-tools/load";
 import { GraphQLFileLoader } from "@graphql-tools/graphql-file-loader";
+import { GetCustomerWallet } from "@/queries/customer.graphql";
 
 export interface AppContext {
   session: Session | null;
@@ -54,8 +58,37 @@ interface GetDropsVars {
   project: string;
 }
 
+interface GetCustomerWalletData {
+  project: Pick<Project, "customer">;
+}
+
+interface GetCustomerWalletVars {
+  project: string;
+  customer: string;
+  assetType: AssetType;
+}
+
+const collectorResolvers: CollectorResolvers<AppContext> = {
+  async wallet({ holaplexCustomerId }, _a, { dataSources: { holaplex } }) {
+    const { data } = await holaplex.query<
+      GetCustomerWalletData,
+      GetCustomerWalletVars
+    >({
+      fetchPolicy: "network-only",
+      query: GetCustomerWallet,
+      variables: {
+        project: process.env.HOLAPLEX_PROJECT_ID as string,
+        customer: holaplexCustomerId as string,
+        assetType: process.env.HOLAPLEX_WALLET_ASSET_TYPE as AssetType,
+      },
+    });
+
+    return data.project.customer?.treasury?.wallet as Wallet;
+  },
+};
+
 export const queryResolvers: QueryResolvers<AppContext> = {
-  async drop(_a, { id }, { dataSources: { holaplex } }) {
+  async drop(_parent, { id }, { dataSources: { holaplex } }) {
     const { data } = await holaplex.query<GetDropData, GetDropVars>({
       fetchPolicy: "network-only",
       query: GetProjectDrop,
@@ -67,7 +100,7 @@ export const queryResolvers: QueryResolvers<AppContext> = {
 
     return data.project.drop as Drop;
   },
-  async drops(_a, _vars, { dataSources: { holaplex } }) {
+  async drops(_parent, _vars, { dataSources: { holaplex } }) {
     const { data } = await holaplex.query<GetDropsData, GetDropsVars>({
       fetchPolicy: "network-only",
       query: GetProjectDrops,
@@ -78,7 +111,7 @@ export const queryResolvers: QueryResolvers<AppContext> = {
 
     return data.project.drops as Drop[];
   },
-  async me(_a, _b, { session, dataSources: { user } }) {
+  async me(_parent, _vars, { session, dataSources: { user } }) {
     if (!session) {
       return null;
     }
@@ -137,6 +170,7 @@ const server = new ApolloServer<AppContext>({
   resolvers: {
     Query: queryResolvers,
     Mutation: mutationResolvers,
+    Collector: collectorResolvers,
   },
   typeDefs,
 });
@@ -150,7 +184,7 @@ export default startServerAndCreateNextHandler(server, {
       dataSources: {
         db,
         holaplex,
-        user: new UserSource(holaplex, db),
+        user: new UserSource(db),
       },
     };
   },

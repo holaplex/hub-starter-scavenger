@@ -1,13 +1,13 @@
 "use client";
-import Image from "next/image";
 import { Holder, Drop as DropType } from "@/graphql.types";
 import { useQuery } from "@apollo/client";
 import { GetDrops } from "@/queries/drop.graphql";
 import Link from "next/link";
-import useMe from "@/hooks/useMe";
 import { Session } from "next-auth";
 import { shorten } from "@/modules/wallet";
 import { CheckIcon } from "@heroicons/react/24/solid";
+import { not } from "ramda";
+import useMe from "@/hooks/useMe";
 
 interface HomeProps {
   session?: Session | null;
@@ -21,20 +21,38 @@ interface GetDropsVars {
   id: string;
 }
 
-function isOwner(drop: DropType, me: any) {
-  return drop.collection.holders?.find(
-    (holder: Holder) => holder.address === me?.wallet?.address
-  );
-}
-
 export default function Home({ session }: HomeProps) {
-  const me = useMe();
   const dropsQuery = useQuery<GetDropsData, GetDropsVars>(GetDrops);
+
+  const meQuery = useMe();
+  const me = meQuery.data?.me;
+
+  const loading = meQuery.loading || dropsQuery.loading;
+  const owns = dropsQuery.data?.drops.reduce((acc: string[], drop) => {
+    const collectionId = drop?.collection?.id as string;
+
+    const isOwner = me?.wallet?.mints?.find((mint) => {
+      return mint.collectionId === collectionId;
+    });
+
+    if (isOwner) {
+      return [...acc, collectionId];
+    }
+
+    return acc;
+  }, []);
 
   return (
     <>
-      <div className="w-full grid grid-cols-4 md:gap-4 lg:gap-12 mt-4 md:mt-10 lg:mt-16">
-        {dropsQuery.loading ? (
+      <img src="/img/hero.png" className="w-36 aspect-square object-cover" />
+      <h1 className="text-2xl text-white mt-12 text-center">
+        Collect [n] NFTs to be entered into our raffle for a [prize]!
+      </h1>
+      <p className="text-gray-300 my-6 text-center">
+        [Rules for collecting NFTs]
+      </p>
+      <div className="w-full grid grid-cols-4 gap-4">
+        {loading ? (
           <>
             <div className="bg-contrast animate-pulse w-full aspect-square rounded-md" />
             <div className="bg-contrast animate-pulse w-full aspect-square rounded-md" />
@@ -44,23 +62,25 @@ export default function Home({ session }: HomeProps) {
         ) : (
           dropsQuery?.data?.drops.map((drop) => {
             const metadataJson = drop.collection.metadataJson;
-            const isHolder = isOwner(drop, me);
+            const isHolder = owns?.find((id) => id === drop.collection.id);
 
             return (
               <div
                 key={drop.id}
-                className="relative w-full aspect-square rounded-log overflow-hidden flex justify-center items-center"
+                className="relative w-full aspect-square flex justify-center items-center"
               >
                 {isHolder && (
-                  <CheckIcon
-                    width={20}
-                    className="z-10 absolute top-4 right-4"
-                  />
+                  <div className="z-10 absolute -top-2 -left-2 w-6 aspect-square bg-contrast rounded-full flex justify-center items-center">
+                    <CheckIcon width={16} />
+                  </div>
+                )}
+                {not(isHolder) && (
+                  <div className="absolute top-0 left-0 right-0 bottom-0 bg-backdrop rounded-lg opacity-50 z-10" />
                 )}
                 <img
                   src={metadataJson?.image as string}
                   alt={metadataJson?.name as string}
-                  className="absolute top-0 left-0 right-0 bottom-0 object-cover"
+                  className="absolute top-0 left-0 right-0 bottom-0 object-cover rounded-lg"
                 />
               </div>
             );
@@ -68,7 +88,7 @@ export default function Home({ session }: HomeProps) {
         )}
       </div>
       <div className="bg-contrast w-full max-w-md rounded-lg p-6 flex justify-between mt-8 items-center mb-6">
-        {dropsQuery.loading ? (
+        {loading ? (
           <>
             <div className="flex flex-row gap-2 items-center">
               <div className="bg-backdrop w-14 aspect-square rounded-full animate-pulse" />
@@ -84,7 +104,7 @@ export default function Home({ session }: HomeProps) {
             <div className="flex flex-row items-center gap-2">
               <img
                 className="w-14 h-14 rounded-full"
-                src={session?.user?.image as string}
+                src={me?.image as string}
               />
 
               <div className="flex flex-col gap-1 justify-between">
@@ -92,7 +112,10 @@ export default function Home({ session }: HomeProps) {
                 <span>{shorten(me?.wallet?.address as string)}</span>
               </div>
             </div>
-            2
+            <div className="flex flex-col justify-between">
+              <span className="text-gray-300 text-xs">NFTs</span>
+              {owns?.length}
+            </div>
           </>
         ) : (
           <>

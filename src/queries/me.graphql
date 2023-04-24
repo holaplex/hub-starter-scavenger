@@ -1,9 +1,15 @@
 query GetMe {
   me {
+    name
     email
     image
     wallet {
       address
+      mints {
+        id
+        address
+        collectionId
+      }
     }
   }
 }

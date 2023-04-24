@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { redirect } from "next/navigation";
-import Login from './Login';
+import Login from "./Login";
 
 export default async function LoginPage() {
   const session = await getServerSession(authOptions);
@@ -10,7 +10,5 @@ export default async function LoginPage() {
     redirect("/");
   }
 
-  return (
-    <Login />
-  );
+  return <Login />;
 }

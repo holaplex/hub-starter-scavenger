@@ -187,6 +187,14 @@ type CollectionMint {
   signature: String
 }
 
+type Collector {
+  email: String
+  holaplexCustomerId: ID
+  image: String
+  name: String
+  wallet: Wallet
+}
+
 """
 This struct represents the input for creating a new API credential, including the ID of the organization that the credential will be associated with and the friendly name assigned to the credential.
 """
@@ -1210,7 +1218,7 @@ type Query {
 
   """Retrieve a member invitation by its ID."""
   invite(id: UUID!): Invite
-  me: User
+  me: Collector
 
   """
   Query an organization by its ID, this query returns `null` if the organization does not exist.
@@ -1305,15 +1313,12 @@ type User {
 
   """The unique identifier for the user identity."""
   id: UUID!
-  image: String
 
   """The last name of the user identity."""
   lastName: String!
-  name: String
 
   """The timestamp in UTC when the user identity was last updated."""
   updatedAt: String!
-  wallet: Wallet
 }
 
 """

@@ -7,17 +7,18 @@ schema {
   mutation: Mutation
 }
 
-type User {
+type Collector {
   name: String
   email: String
   image: String
   wallet: Wallet
+  holaplexCustomerId: ID
 }
 
 type Query {
   drop(id: ID!): Drop
   drops: [Drop!]
-  me: User
+  me: Collector
 }
 
 type Mutation {

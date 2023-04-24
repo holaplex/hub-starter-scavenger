@@ -183,6 +183,15 @@ export type CollectionMint = {
   signature?: Maybe<Scalars['String']>;
 };
 
+export type Collector = {
+  __typename?: 'Collector';
+  email?: Maybe<Scalars['String']>;
+  holaplexCustomerId?: Maybe<Scalars['ID']>;
+  image?: Maybe<Scalars['String']>;
+  name?: Maybe<Scalars['String']>;
+  wallet?: Maybe<Wallet>;
+};
+
 /** This struct represents the input for creating a new API credential, including the ID of the organization that the credential will be associated with and the friendly name assigned to the credential. */
 export type CreateCredentialInput = {
   /** The friendly name assigned to the new API credential. */
@@ -1132,7 +1141,7 @@ export type Query = {
   eventTypes: Array<EventType>;
   /** Retrieve a member invitation by its ID. */
   invite?: Maybe<Invite>;
-  me?: Maybe<User>;
+  me?: Maybe<Collector>;
   /** Query an organization by its ID, this query returns `null` if the organization does not exist. */
   organization?: Maybe<Organization>;
   /** Query a project by it's ID, this query returns `null` if the project does not exist. */
@@ -1231,13 +1240,10 @@ export type User = {
   firstName: Scalars['String'];
   /** The unique identifier for the user identity. */
   id: Scalars['UUID'];
-  image?: Maybe<Scalars['String']>;
   /** The last name of the user identity. */
   lastName: Scalars['String'];
-  name?: Maybe<Scalars['String']>;
   /** The timestamp in UTC when the user identity was last updated. */
   updatedAt: Scalars['String'];
-  wallet?: Maybe<Wallet>;
 };
 
 /** A blockchain wallet is a digital wallet that allows users to securely store, manage, and transfer their cryptocurrencies or other digital assets on a blockchain network. */
@@ -1371,6 +1377,7 @@ export type ResolversTypes = {
   CollectionCreator: ResolverTypeWrapper<CollectionCreator>;
   CollectionCreatorInput: CollectionCreatorInput;
   CollectionMint: ResolverTypeWrapper<CollectionMint>;
+  Collector: ResolverTypeWrapper<Collector>;
   CreateCredentialInput: CreateCredentialInput;
   CreateCredentialPayload: ResolverTypeWrapper<CreateCredentialPayload>;
   CreateCustomerInput: CreateCustomerInput;
@@ -1458,6 +1465,7 @@ export type ResolversParentTypes = {
   CollectionCreator: CollectionCreator;
   CollectionCreatorInput: CollectionCreatorInput;
   CollectionMint: CollectionMint;
+  Collector: Collector;
   CreateCredentialInput: CreateCredentialInput;
   CreateCredentialPayload: CreateCredentialPayload;
   CreateCustomerInput: CreateCustomerInput;
@@ -1590,6 +1598,15 @@ export type CollectionMintResolvers<ContextType = any, ParentType extends Resolv
   owner?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   sellerFeeBasisPoints?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   signature?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CollectorResolvers<ContextType = any, ParentType extends ResolversParentTypes['Collector'] = ResolversParentTypes['Collector']> = {
+  email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  holaplexCustomerId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  image?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  wallet?: Resolver<Maybe<ResolversTypes['Wallet']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -1879,7 +1896,7 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
   drops?: Resolver<Maybe<Array<ResolversTypes['Drop']>>, ParentType, ContextType>;
   eventTypes?: Resolver<Array<ResolversTypes['EventType']>, ParentType, ContextType>;
   invite?: Resolver<Maybe<ResolversTypes['Invite']>, ParentType, ContextType, RequireFields<QueryInviteArgs, 'id'>>;
-  me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
+  me?: Resolver<Maybe<ResolversTypes['Collector']>, ParentType, ContextType>;
   organization?: Resolver<Maybe<ResolversTypes['Organization']>, ParentType, ContextType, RequireFields<QueryOrganizationArgs, 'id'>>;
   project?: Resolver<Maybe<ResolversTypes['Project']>, ParentType, ContextType, RequireFields<QueryProjectArgs, 'id'>>;
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, RequireFields<QueryUserArgs, 'id'>>;
@@ -1914,11 +1931,8 @@ export type UserResolvers<ContextType = any, ParentType extends ResolversParentT
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   firstName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['UUID'], ParentType, ContextType>;
-  image?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  wallet?: Resolver<Maybe<ResolversTypes['Wallet']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -1958,6 +1972,7 @@ export type Resolvers<ContextType = any> = {
   Collection?: CollectionResolvers<ContextType>;
   CollectionCreator?: CollectionCreatorResolvers<ContextType>;
   CollectionMint?: CollectionMintResolvers<ContextType>;
+  Collector?: CollectorResolvers<ContextType>;
   CreateCredentialPayload?: CreateCredentialPayloadResolvers<ContextType>;
   CreateCustomerPayload?: CreateCustomerPayloadResolvers<ContextType>;
   CreateCustomerWalletPayload?: CreateCustomerWalletPayloadResolvers<ContextType>;
