@@ -81,6 +81,7 @@ HOLAPLEX_API_ENDPOINT=https://api.holaplex.com/graphql
 # https://docs.holaplex.dev/api
 HOLAPLEX_AUTH_TOKEN=
 HOLAPLEX_PROJECT_ID=
+HOLAPLEX_WALLET_ASSET_TYPE=SOL
 ```
 
 ### Migrations
