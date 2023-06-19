@@ -1,53 +1,81 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import Link from "next/link";
-import { Collector } from "@/graphql.types";
-import useMe from "@/hooks/useMe";
-import { usePathname } from "next/navigation";
+import Image from 'next/image';
+import Link from 'next/link';
+import useMe from '@/hooks/useMe';
+import { usePathname } from 'next/navigation';
+import { User } from '../../graphql.types';
+import { PopoverBox } from '../../components/Popover';
+import { Icon } from '../../components/Icon';
+import { shorten } from '../../modules/wallet';
+import Copy from '../../components/Copy';
+import { signOut } from 'next-auth/react';
 
 interface GetMeData {
-  me: Collector | undefined;
+  me: User | undefined;
 }
 
 export default function Session({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const meQuery = useMe();
-  const me = meQuery.data?.me;
+  const me = useMe();
 
   return (
     <>
-      <div className="flex w-full justify-between items-center py-4">
-        <Link href="/">
-          <Image src="/img/logo.png" alt="site logo" width={199} height={18} />
+      <header className='flex w-full justify-between items-center py-4'>
+        <Link href='/'>
+          <Image src='/img/logo.png' alt='site logo' width={199} height={18} />
         </Link>
-        {meQuery.loading ? (
-          <div className="bg-contrast h-14 w-36 animate-pulse rounded-full" />
-        ) : me ? (
-          <button className="text-cta font-bold border-2 rounded-full border-cta py-3 px-6 flex gap-2">
-            <img className="w-6 h-6 rounded-full" src={me?.image as string} />
-            <span>{me?.name}</span>
-          </button>
+        {me ? (
+          <PopoverBox
+            triggerButton={
+              <button className='text-cta font-bold border-2 rounded-full border-cta py-3 px-6 flex gap-2 items-center'>
+                <img
+                  className='w-6 h-6 rounded-full'
+                  src={me?.image as string}
+                />
+                <span>{me?.name}</span>
+                <Icon.ChevronDown className='stroke-cta' />
+              </button>
+            }
+          >
+            <div className='rounded-lg bg-contrast p-6 flex flex-col items-center mt-4'>
+              <span className='text-xs text-gray-300'>
+                Solana wallet address
+              </span>
+              <div className='flex gap-2 mt-1'>
+                <span className='text-xs'>
+                  {shorten(me.wallet?.address as string)}
+                </span>
+                <Copy copyString={me.wallet?.address as string} />
+              </div>
+              <button
+                onClick={() => signOut()}
+                className='text-cta font-medium md:font-bold md:border-2 md:rounded-full md:border-cta md:py-3 md:px-6 mt-10'
+              >
+                Log out
+              </button>
+            </div>
+          </PopoverBox>
         ) : (
           <>
-            <div className="flex gap-1 md:gap-4 items-center">
+            <div className='flex gap-1 md:gap-4 items-center'>
               <Link
                 href={`/login?return_to=${pathname}`}
-                className="text-cta font-medium md:font-bold md:border-2 md:rounded-full md:border-cta md:py-3 md:px-6"
+                className='text-cta font-medium md:font-bold md:border-2 md:rounded-full md:border-cta md:py-3 md:px-6'
               >
                 Log in
               </Link>
-              <span className="text-gray-300 font-medium md:hidden">or</span>
+              <span className='text-gray-300 font-medium md:hidden'>or</span>
               <Link
                 href={`/login?return_to=${pathname}`}
-                className="text-cta font-medium md:text-backdrop md:bg-cta md:rounded-full md:font-bold md:py-3 md:px-6"
+                className='text-cta font-medium md:text-backdrop md:bg-cta md:rounded-full md:font-bold md:py-3 md:px-6'
               >
                 Sign up
               </Link>
             </div>
           </>
         )}
-      </div>
+      </header>
       {children}
     </>
   );

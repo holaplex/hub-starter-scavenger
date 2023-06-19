@@ -7,7 +7,7 @@ schema {
   mutation: Mutation
 }
 
-type Collector {
+type User {
   name: String
   email: String
   image: String
@@ -18,7 +18,8 @@ type Collector {
 type Query {
   drop(id: ID!): Drop
   drops: [Drop!]
-  me: Collector
+  me: User
+  collections: [CollectionMint]
 }
 
 type Mutation {

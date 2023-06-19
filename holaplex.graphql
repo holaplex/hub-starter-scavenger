@@ -28,6 +28,28 @@ type AccessToken {
   tokenType: String!
 }
 
+enum Action {
+  CREATE_DROP
+  CREATE_WALLET
+  MINT_EDITION
+  RETRY_DROP
+  RETRY_MINT
+  TRANSFER_ASSET
+}
+
+"""
+Represents the cost of performing a certain action on different blockchains
+"""
+type ActionCost {
+  """enum that represents the type of action being performed."""
+  action: Action!
+
+  """
+  a vector of BlockchainCost structs that represents the cost of performing the action on each blockchain.
+  """
+  blockchains: [BlockchainCost!]!
+}
+
 """
 An enum type named Affiliation that defines a user's association to an organization. The enum is derived using a Union attribute. It has two variants, each containing an associated data type:
 """
@@ -66,6 +88,19 @@ enum Blockchain {
   ETHEREUM
   POLYGON
   SOLANA
+}
+
+"""Represents the cost of performing an action on a specific blockchain"""
+type BlockchainCost {
+  """
+  enum that represents the blockchain on which the action is being performed.
+  """
+  blockchain: Blockchain!
+
+  """
+  represents the cost in credits for performing the action on the blockchain.
+  """
+  credits: Int!
 }
 
 type Collection {
@@ -160,13 +195,19 @@ type CollectionMint {
   collectionId: UUID!
 
   """The date and time when the NFT was created."""
-  createdAt: NaiveDateTime!
+  createdAt: DateTime!
 
   """The unique ID of the creator of the NFT."""
   createdBy: UUID!
 
   """The status of the NFT creation."""
   creationStatus: CreationStatus!
+
+  """credits deduction id"""
+  creditsDeductionId: UUID
+
+  """The unique edition number of the NFT."""
+  edition: Int!
 
   """The unique ID of the minted NFT."""
   id: UUID!
@@ -185,14 +226,6 @@ type CollectionMint {
 
   """The transaction signature associated with the NFT."""
   signature: String
-}
-
-type Collector {
-  email: String
-  holaplexCustomerId: ID
-  image: String
-  name: String
-  wallet: Wallet
 }
 
 """
@@ -343,6 +376,23 @@ type Credential {
   organizationId: UUID!
 }
 
+type CreditDeposit {
+  cost: Float!
+  createdAt: DateTime!
+  credits: Int!
+  id: UUID!
+  initiatedBy: UUID!
+  organization: UUID!
+  perCreditCost: Float!
+  reason: DepositReason!
+}
+
+type Credits {
+  balance: Int!
+  deposits: [CreditDeposit!]
+  id: UUID!
+}
+
 """
 A customer record represents a user in your service and is used to group custodial wallets within a specific project. This allows for easy management of wallets and associated assets for a particular customer within your service.
 """
@@ -378,7 +428,7 @@ type Customer {
 }
 
 """
-Implement the DateTime<Utc> scalar
+Implement the DateTime<FixedOffset> scalar
 
 The input/output is a string in RFC3339 format.
 """
@@ -386,6 +436,11 @@ scalar DateTime
 
 input DeactivateMemberInput {
   id: UUID!
+}
+
+type DeductionTotals {
+  action: Action!
+  spent: Int!
 }
 
 """The input for deleting a credential."""
@@ -408,12 +463,17 @@ type DeleteWebhookPayload {
   webhook: UUID!
 }
 
+enum DepositReason {
+  GIFTED
+  PURCHASED
+}
+
 type Drop {
   """The collection for which the drop is managing mints."""
   collection: Collection!
 
   """The date and time in UTC when the drop was created."""
-  createdAt: NaiveDateTime!
+  createdAt: DateTime!
 
   """The user id of the person who created the drop."""
   createdById: UUID!
@@ -424,11 +484,11 @@ type Drop {
   """
   The end date and time in UTC for the drop. A value of `null` means the drop does not end until it is fully minted.
   """
-  endTime: NaiveDateTime
+  endTime: DateTime
 
   """The unique identifier for the drop."""
   id: UUID!
-  pausedAt: NaiveDateTime
+  pausedAt: DateTime
 
   """
   The cost to mint the drop in US dollars. When purchasing with crypto the user will be charged at the current conversion rate for the blockchain's native coin at the time of minting.
@@ -445,12 +505,12 @@ type Drop {
   The shutdown_at field represents the date and time in UTC when the drop was shutdown
   If it is null, the drop is currently not shutdown
   """
-  shutdownAt: NaiveDateTime
+  shutdownAt: DateTime
 
   """
   The date and time in UTC when the drop is eligible for minting. A value of `null` means the drop can be minted immediately.
   """
-  startTime: NaiveDateTime
+  startTime: DateTime
 
   """The current status of the drop."""
   status: DropStatus!
@@ -571,6 +631,9 @@ enum FilterType {
   """Event triggered when a new drop is minted"""
   DROP_MINTED
 
+  """Event triggered when a mint has been successfully transfered"""
+  MINT_TRANSFERED
+
   """Event triggered when a new project is created"""
   PROJECT_CREATED
 
@@ -598,7 +661,7 @@ type Invite {
   """
   The datetime, in UTC, when the invitation to join the organization was created.
   """
-  createdAt: NaiveDateTime!
+  createdAt: DateTime!
 
   """The ID of the user who created the invitation."""
   createdBy: UUID!
@@ -626,7 +689,7 @@ type Invite {
   status: InviteStatus!
 
   """The datetime, in UTC, when the invitation status was updated."""
-  updatedAt: NaiveDateTime
+  updatedAt: DateTime
 }
 
 """Input required for inviting a member to the organization."""
@@ -660,12 +723,12 @@ A member of a Holaplex organization, representing an individual who has been gra
 """
 type Member {
   """The datetime, in UTC, when the member joined the organization."""
-  createdAt: NaiveDateTime!
+  createdAt: DateTime!
 
   """
   The datetime, in UTC, when the member was deactivated from the organization.
   """
-  deactivatedAt: NaiveDateTime
+  deactivatedAt: DateTime
 
   """The unique identifier of the member."""
   id: UUID!
@@ -693,7 +756,7 @@ type Member {
   """
   The datetime, in UTC, when the member was revoked from the organization.
   """
-  revokedAt: NaiveDateTime
+  revokedAt: DateTime
 
   """The user identity who is a member of the organization."""
   user: User
@@ -723,9 +786,10 @@ type MetadataJson {
   externalUrl: String
   id: UUID!
   identifier: String!
+  image: String
 
   """The image URI for the NFT."""
-  image: String!
+  imageOriginal: String!
 
   """The assigned name of the NFT."""
   name: String!
@@ -781,11 +845,15 @@ input MetadataJsonPropertyInput {
   files: [MetadataJsonFileInput!]
 }
 
+"""
+Represents input data for `mint_edition` mutation with a UUID and recipient as fields
+"""
 input MintDropInput {
   drop: UUID!
   recipient: String!
 }
 
+"""Represents payload data for the `mint_edition` mutation"""
 type MintEditionPayload {
   collectionMint: CollectionMint!
 }
@@ -923,6 +991,24 @@ type Mutation {
   resumeDrop(input: ResumeDropInput!): ResumeDropPayload!
 
   """
+  This mutation retries an existing drop.
+  The drop returns immediately with a creation status of CREATING.
+  You can [set up a webhook](https://docs.holaplex.dev/hub/For%20Developers/webhooks-overview) to receive a notification when the drop is ready to be minted.
+  Errors
+  The mutation will fail if the drop and its related collection cannot be located,
+  if the transaction response cannot be built,
+  or if the transaction event cannot be emitted.
+  """
+  retryDrop(input: RetryDropInput!): CreateDropPayload!
+
+  """
+  This mutation retries a mint which failed or is in pending state. The mint returns immediately with a creation status of CREATING. You can [set up a webhook](https://docs.holaplex.dev/hub/For%20Developers/webhooks-overview) to receive a notification when the mint is accepted by the blockchain.
+  # Errors
+  If the mint cannot be saved to the database or fails to be emitted for submission to the desired blockchain, the mutation will result in an error.
+  """
+  retryMint(input: RetryMintInput!): RetryMintPayload!
+
+  """
   Shuts down a drop by writing the current UTC timestamp to the shutdown_at field of drop record.
   Returns the `Drop` object on success.
   
@@ -930,6 +1016,28 @@ type Mutation {
   Fails if the drop or collection is not found, or if updating the drop record fails.
   """
   shutdownDrop(input: ShutdownDropInput!): ShutdownDropPayload!
+
+  """
+  Transfers an asset from one user to another on a supported blockchain network.
+  
+  # Arguments
+  
+  * `self` - A reference to the current instance of the struct.
+  * `ctx` - A context object containing application context data.
+  * `input` - A TransferAssetInput struct containing the input data for the asset transfer.
+  
+  # Returns
+  
+  Returns a Result containing a TransferAssetPayload struct with the updated mint information upon success.
+  
+  # Errors
+  This function returns an error :
+  If the specified blockchain is not currently supported.
+  If the specified mint does not exist.
+  If there is an error while making a transfer request to the Solana blockchain.
+  If there is an error while sending the TransferAsset event to the event producer.
+  """
+  transferAsset(input: TransferAssetInput!): TransferAssetPayload!
 }
 
 """
@@ -948,7 +1056,7 @@ type Organization {
   """
   The datetime, in UTC, when the Holaplex organization was created by its owner.
   """
-  createdAt: NaiveDateTime!
+  createdAt: DateTime!
 
   """
   Get a single API credential by client ID.
@@ -980,9 +1088,25 @@ type Organization {
   credentials(limit: Int, offset: Int): [Credential!]!
 
   """
+  Define an asynchronous function to load the credits for the organization
+  Returns `Credits` object
+  #Errors
+  returns error if credits_loader is not found in the context or if the loader fails to load the credits
+  """
+  credits: Credits
+
+  """
   The datetime, in UTC, when the Holaplex organization was deactivated by its owner.
   """
-  deactivatedAt: NaiveDateTime
+  deactivatedAt: DateTime
+
+  """
+  Define an asynchronous function to load the total credits deducted for each action
+  Returns `DeductionTotals` object
+  #Errors
+  returns error if total_deductions_loader is not found in the context or if the loader fails to load the total deductions
+  """
+  deductionTotals: [DeductionTotals!]
 
   """
   The unique identifier assigned to the Holaplex organization, which is used to distinguish it from other organizations within the Holaplex ecosystem.
@@ -1008,11 +1132,12 @@ type Organization {
   The owner of the Holaplex organization, who has created the organization and has full control over its settings and members.
   """
   owner: Owner
+  profileImageUrl: String
 
   """
   The optional profile image associated with the Holaplex organization, which can be used to visually represent the organization.
   """
-  profileImageUrl: String
+  profileImageUrlOriginal: String
 
   """
   The projects that have been created and are currently associated with the Holaplex organization, which are used to organize NFT campaigns or initiatives within the organization.
@@ -1060,7 +1185,7 @@ The owner of the Holaplex organization, who is the individual that created the o
 """
 type Owner {
   """The datetime, in UTC, when the organization was created."""
-  createdAt: NaiveDateTime!
+  createdAt: DateTime!
 
   """
   The unique identifier assigned to the record of the user who created the Holaplex organization and serves as its owner, which is used to distinguish their record from other records within the Holaplex ecosystem.
@@ -1130,7 +1255,7 @@ A Holaplex project that belongs to an organization. Projects are used to group u
 """
 type Project {
   """The datetime, in UTC, when the project was created."""
-  createdAt: NaiveDateTime!
+  createdAt: DateTime!
 
   """Retrieve a customer record associated with the project, using its ID."""
   customer(id: UUID!): Customer
@@ -1141,7 +1266,7 @@ type Project {
   """
   The date and time in Coordinated Universal Time (UTC) when the Holaplex project was created. Once a project is deactivated, objects that were assigned to the project can no longer be interacted with.
   """
-  deactivatedAt: NaiveDateTime
+  deactivatedAt: DateTime
 
   """Look up a drop associated with the project by its ID."""
   drop(id: UUID!): Drop
@@ -1160,11 +1285,12 @@ type Project {
 
   """The ID of the Holaplex organization to which the project belongs."""
   organizationId: UUID!
+  profileImageUrl: String
 
   """
   The optional profile image associated with the project, which can be used to visually represent the project.
   """
-  profileImageUrl: String
+  profileImageUrlOriginal: String
 
   """
   The treasury assigned to the project, which contains the project's wallets.
@@ -1175,7 +1301,7 @@ type Project {
 """Represents the purchase of an NFT."""
 type Purchase {
   """The date and time when the purchase was created."""
-  createdAt: NaiveDateTime!
+  createdAt: DateTime!
 
   """The ID of the drop that facilitated the purchase, if any."""
   dropId: UUID
@@ -1200,6 +1326,15 @@ type Purchase {
 }
 
 type Query {
+  collections: [CollectionMint]
+
+  """
+  Returns a list of `ActionCost` which represents the cost of each action on different blockchains.
+  
+  # Errors
+  This function fails if it fails to get `CreditsClient` or if blockchain enum conversion fails.
+  """
+  creditSheet: [ActionCost!]!
   drop(id: ID!): Drop
   drops: [Drop!]
 
@@ -1218,7 +1353,7 @@ type Query {
 
   """Retrieve a member invitation by its ID."""
   invite(id: UUID!): Invite
-  me: Collector
+  me: User
 
   """
   Query an organization by its ID, this query returns `null` if the organization does not exist.
@@ -1249,6 +1384,22 @@ type ResumeDropPayload {
   drop: Drop!
 }
 
+input RetryDropInput {
+  drop: UUID!
+}
+
+"""
+Represents input data for `retry_mint` mutation with an ID as a field of type UUID
+"""
+input RetryMintInput {
+  id: UUID!
+}
+
+"""Represents payload data for `retry_mint` mutation"""
+type RetryMintPayload {
+  collectionMint: CollectionMint!
+}
+
 """Represents the input fields for shutting down a drop"""
 input ShutdownDropInput {
   drop: UUID!
@@ -1260,12 +1411,21 @@ type ShutdownDropPayload {
   drop: Drop!
 }
 
+input TransferAssetInput {
+  id: UUID!
+  recipient: String!
+}
+
+type TransferAssetPayload {
+  mint: CollectionMint!
+}
+
 """
 A collection of wallets assigned to different entities in the Holaplex ecosystem.
 """
 type Treasury {
-  """The creation datetime of the vault."""
-  createdAt: NaiveDateTime!
+  """The creation DateTimeWithTimeZone of the vault."""
+  createdAt: DateTime!
 
   """The unique identifier for the treasury."""
   id: UUID!
@@ -1310,15 +1470,22 @@ type User {
 
   """The first name of the user identity."""
   firstName: String!
+  holaplexCustomerId: ID
 
   """The unique identifier for the user identity."""
   id: UUID!
+  image: String
 
   """The last name of the user identity."""
   lastName: String!
+  name: String
+
+  """The profile image associated with the user identity."""
+  profileImage: String
 
   """The timestamp in UTC when the user identity was last updated."""
   updatedAt: String!
+  wallet: Wallet
 }
 
 """
@@ -1326,20 +1493,20 @@ A blockchain wallet is a digital wallet that allows users to securely store, man
 """
 type Wallet {
   """The wallet address."""
-  address: String!
+  address: String
 
   """The wallet's associated blockchain."""
   assetId: AssetType!
-  createdAt: NaiveDateTime!
+  createdAt: DateTime!
   createdBy: UUID!
-  legacyAddress: String!
+  deductionId: UUID
+  id: UUID!
 
   """
   The NFTs that were minted from Holaplex and are owned by the wallet's address.
   """
   mints: [CollectionMint!]
-  removedAt: NaiveDateTime
-  tag: String!
+  removedAt: DateTime
   treasuryId: UUID!
 }
 

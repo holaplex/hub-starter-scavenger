@@ -6,6 +6,7 @@ declare module '*/customer.graphql' {
 export const CreateCustomerWallet: DocumentNode;
 export const GetCustomerWallet: DocumentNode;
 export const GetCustomerTreasury: DocumentNode;
+export const GetCustomerCollections: DocumentNode;
 
   export default defaultDocument;
 }
@@ -27,6 +28,15 @@ declare module '*/mint.graphql' {
   import { DocumentNode } from 'graphql';
   const defaultDocument: DocumentNode;
   export const MintDrop: DocumentNode;
+
+  export default defaultDocument;
+}
+    
+
+declare module '*/collections.graphql' {
+  import { DocumentNode } from 'graphql';
+  const defaultDocument: DocumentNode;
+  export const GetCollections: DocumentNode;
 
   export default defaultDocument;
 }
