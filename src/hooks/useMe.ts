@@ -1,10 +1,9 @@
-import { Collector } from "@/graphql.types";
-import { GetMe } from "@/queries/me.graphql";
-import { useQuery, QueryResult, OperationVariables } from "@apollo/client";
+import { User } from '@/graphql.types';
+import { MeContext } from '@/providers/MeProvider';
+import { useContext } from 'react';
 
-interface GetMeData {
-  me: Collector | undefined;
-}
-export default function useMe(): QueryResult<GetMeData, OperationVariables> {
-  return useQuery<GetMeData>(GetMe);
+export default function useMe(): User | undefined {
+  const { me } = useContext(MeContext);
+
+  return me;
 }
