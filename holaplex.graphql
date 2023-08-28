@@ -1,4 +1,7 @@
-directive @defer(if: Boolean! = true, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+schema {
+  query: Query
+  mutation: Mutation
+}
 
 """Input required for accepting an invitation to the organization."""
 input AcceptInviteInput {
@@ -6,24 +9,18 @@ input AcceptInviteInput {
   invite: UUID!
 }
 
-"""
-The response returned after accepting an invitation to the organization.
-"""
+"""The response returned after accepting an invitation to the organization."""
 type AcceptInvitePayload {
   """The invitation to the organization that has been accepted."""
   invite: Invite!
 }
 
-"""
-An access token used to authenticate and authorize access to the Hub API.
-"""
+"""An access token used to authenticate and authorize access to the Hub API."""
 type AccessToken {
   """A string representing the access token used to authenticate requests."""
   accessToken: String!
-
   """A timestamp indicating when the access token will expire."""
   expiresAt: NaiveDateTime!
-
   """A string indicating the type of access token, such as "Bearer"."""
   tokenType: String!
 }
@@ -35,6 +32,7 @@ enum Action {
   RETRY_DROP
   RETRY_MINT
   TRANSFER_ASSET
+<<<<<<< Updated upstream
 }
 
 """
@@ -54,34 +52,34 @@ type ActionCost {
 An enum type named Affiliation that defines a user's association to an organization. The enum is derived using a Union attribute. It has two variants, each containing an associated data type:
 """
 union Affiliation = Member | Owner
+=======
+  CREATE_COLLECTION
+  RETRY_COLLECTION
+  MINT
+  MINT_COMPRESSED
+  UPDATE_MINT
+}
+
+"""Represents the cost of performing a certain action on different blockchains"""
+type ActionCost {
+  """enum that represents the type of action being performed."""
+  action: Action!
+  """a vector of BlockchainCost structs that represents the cost of performing the action on each blockchain."""
+  blockchains: [BlockchainCost!]!
+}
+
+"""An enum type named Affiliation that defines a user's association to an organization. The enum is derived using a Union attribute. It has two variants, each containing an associated data type:"""
+union Affiliation = Owner | Member
+>>>>>>> Stashed changes
 
 """Fireblocks-defined blockchain identifiers."""
 enum AssetType {
-  """Ethereum Mainnet"""
-  ETH
-
-  """
-  Note: Holaplex uses `ETH_TEST` for provisioning wallets on its staging environment but still submits transactions to mainnet.
-  """
-  ETH_TEST
-
-  """Mainnet Polygon"""
-  MATIC
-
-  """
-  Ploygon Mumbai Testnet
-  Note: Holaplex uses `MATIC_TEST` for provisioning wallets on its staging environment but still submits transactions to mainnet.
-  """
-  MATIC_TEST
-
   """Mainnet Solana"""
   SOL
-
-  """
-  Devnet Solana
-  Note: Holaplex uses `SOL_TEST` for provisioning wallets on its staging environment but still submits transactions to mainnet.
-  """
-  SOL_TEST
+  """Mainnet Polygon"""
+  MATIC
+  """Ethereum Mainnet"""
+  ETH
 }
 
 enum Blockchain {
@@ -92,6 +90,7 @@ enum Blockchain {
 
 """Represents the cost of performing an action on a specific blockchain"""
 type BlockchainCost {
+<<<<<<< Updated upstream
   """
   enum that represents the blockchain on which the action is being performed.
   """
@@ -110,81 +109,70 @@ type Collection {
   address: String
 
   """The blockchain of the collection."""
+=======
+  """enum that represents the blockchain on which the action is being performed."""
+>>>>>>> Stashed changes
   blockchain: Blockchain!
+  """represents the cost in credits for performing the action on the blockchain. If nil then the action is not supported on the blockchain."""
+  credits: Int
+}
 
-  """
-  The creation status of the collection. When the collection is in a `CREATED` status you can mint NFTs from the collection.
-  """
-  creationStatus: CreationStatus!
-
-  """The list of attributed creators for the collection."""
-  creators: [CollectionCreator!]
-
-  """The list of current holders of NFTs from the collection."""
-  holders: [Holder!]
-
+type Collection {
   """The unique identifier for the collection."""
   id: UUID!
-
+  """The blockchain of the collection."""
+  blockchain: Blockchain!
+  """The total supply of the collection. Setting to `null` implies unlimited minting."""
+  supply: Int
+  """The creation status of the collection. When the collection is in a `CREATED` status you can mint NFTs from the collection."""
+  creationStatus: CreationStatus!
+  projectId: UUID!
+  """The date and time in UTC when the collection was created."""
+  createdAt: DateTime!
+  """The user id of the person who created the collection."""
+  createdById: UUID!
+  creditsDeductionId: UUID
+  """
+  The blockchain address of the collection used to view it in blockchain explorers.
+  On Solana this is the mint address.
+  On EVM chains it is the concatenation of the contract address and the token id `{contractAddress}:{tokenId}`.
+  """
+  address: String
+  """The current number of NFTs minted from the collection."""
+  totalMints: Int!
+  """The transaction signature of the collection."""
+  signature: String
+  """The royalties assigned to mints belonging to the collection expressed in basis points."""
+  sellerFeeBasisPoints: Int!
   """
   The metadata json associated to the collection.
   ## References
   [Metaplex v1.1.0 Standard](https://docs.metaplex.com/programs/token-metadata/token-standard)
   """
   metadataJson: MetadataJson
-
-  """
-  The list of minted NFTs from the collection including the NFTs address and current owner's wallet address.
-  """
+  """The list of minted NFTs from the collection including the NFTs address and current owner's wallet address."""
   mints: [CollectionMint!]
-
-  """
-  A list of all NFT purchases from the collection, including both primary and secondary sales.
-  """
-  purchases: [Purchase!]
-
-  """
-  The royalties assigned to mints belonging to the collection expressed in basis points.
-  """
-  sellerFeeBasisPoints: Int!
-
-  """The transaction signature of the collection."""
-  signature: String
-
-  """
-  The total supply of the collection. Setting to `null` implies unlimited minting.
-  """
-  supply: Int
-
-  """The current number of NFTs minted from the collection."""
-  totalMints: Int!
+  """The list of attributed creators for the collection."""
+  creators: [CollectionCreator!]
+  """The list of current holders of NFTs from the collection."""
+  holders: [Holder!]
+  """A list of all NFT purchases from the collection, including both primary and secondary sales."""
+  purchases: [MintHistory!] @deprecated(reason: "Use `mint_histories` instead")
+  """A list of all NFT mints from the collection, including both primary and secondary sales."""
+  mintHistories: [MintHistory!]
+  drop: Drop
 }
 
 type CollectionCreator {
-  address: String!
   collectionId: UUID!
-  share: Int!
-  verified: Boolean!
-}
-
-"""An attributed creator for a colleciton."""
-input CollectionCreatorInput {
-  """The wallet address of the creator."""
   address: String!
-
-  """The share of royalties payout the creator should receive."""
+  verified: Boolean!
   share: Int!
-
-  """
-  This field indicates whether the collection's creator has been verified. This feature is only supported on the Solana blockchain.
-  ## References
-  [Metaplex Token Metadata - Verify creator instruction](https://docs.metaplex.com/programs/token-metadata/instructions#verify-a-creator)
-  """
-  verified: Boolean
 }
 
 """Represents a single NFT minted from a collection."""
 type CollectionMint {
+<<<<<<< Updated upstream
   """The wallet address of the NFT."""
   address: String!
 
@@ -209,64 +197,93 @@ type CollectionMint {
   """The unique edition number of the NFT."""
   edition: Int!
 
+=======
+>>>>>>> Stashed changes
   """The unique ID of the minted NFT."""
   id: UUID!
-
+  """The ID of the collection the NFT was minted from."""
+  collectionId: UUID!
+  """
+  The address of the NFT
+  On Solana this is the mint address.
+  On EVM chains it is the concatenation of the contract address and the token id `{contractAddress}:{tokenId}`.
+  """
+  address: String
+  """The wallet address of the owner of the NFT."""
+  owner: String!
+  """The status of the NFT creation."""
+  creationStatus: CreationStatus!
+  """The unique ID of the creator of the NFT."""
+  createdBy: UUID!
+  """The date and time when the NFT was created."""
+  createdAt: DateTime!
+  """The transaction signature associated with the NFT."""
+  signature: String
+  """The unique edition number of the NFT."""
+  edition: Int!
+  """The seller fee basis points (ie royalties) for the NFT."""
+  sellerFeeBasisPoints: Int!
+  """credits deduction id"""
+  creditsDeductionId: UUID
+  """Indicates if the NFT is compressed. Compression is only supported on Solana."""
+  compressed: Boolean!
+  """The collection the NFT was minted from."""
+  collection: Collection
   """
   The metadata json associated to the collection.
   [Metaplex v1.1.0 Standard](https://docs.metaplex.com/programs/token-metadata/token-standard)
   """
   metadataJson: MetadataJson
-
-  """The wallet address of the owner of the NFT."""
-  owner: String!
-
-  """The seller fee basis points (ie royalties) for the NFT."""
-  sellerFeeBasisPoints: Int!
-
-  """The transaction signature associated with the NFT."""
-  signature: String
+  """The update history of the mint."""
+  updateHistories: [UpdateHistory!]
+  """The creators of the mint. Includes the creator addresses and their shares."""
+  creators: [MintCreator!]
+  """The record of the original mint."""
+  mintHistory: MintHistory
+  """The history of transfers for the mint."""
+  transferHistories: [NftTransfer!]
 }
 
+<<<<<<< Updated upstream
 """
 This struct represents the input for creating a new API credential, including the ID of the organization that the credential will be associated with and the friendly name assigned to the credential.
 """
+=======
+input CreateCollectionInput {
+  project: UUID!
+  blockchain: Blockchain!
+  creators: [CreatorInput!]!
+  metadataJson: MetadataJsonInput!
+}
+
+type CreateCollectionPayload {
+  collection: Collection!
+}
+
+"""This struct represents the input for creating a new API credential, including the ID of the organization that the credential will be associated with and the friendly name assigned to the credential."""
+>>>>>>> Stashed changes
 input CreateCredentialInput {
+  """The ID of the organization that the new API credential will be associated with."""
+  organization: UUID!
   """The friendly name assigned to the new API credential."""
   name: String!
-
-  """
-  The ID of the organization that the new API credential will be associated with.
-  """
-  organization: UUID!
 }
 
-"""
-The response payload returned after successfully creating an API credential. It includes the newly created Credential object, which represents the API credential, as well as an `AccessToken` object that can be used to authenticate requests to the Hub API.
-"""
+"""The response payload returned after successfully creating an API credential. It includes the newly created Credential object, which represents the API credential, as well as an `AccessToken` object that can be used to authenticate requests to the Hub API."""
 type CreateCredentialPayload {
-  """
-  An `AccessToken` object that can be used to authenticate requests to the Hub API.
-  """
-  accessToken: AccessToken!
-
   """A `Credential` object representing the newly created API credential."""
   credential: Credential!
+  """An `AccessToken` object that can be used to authenticate requests to the Hub API."""
+  accessToken: AccessToken!
 }
 
-"""
-This input object is used for creating a customer and associated treasury for holding custodial wallets on behalf of the user.
-"""
+"""This input object is used for creating a customer and associated treasury for holding custodial wallets on behalf of the user."""
 input CreateCustomerInput {
-  """
-  The unique identifier of the project to which the customer is associated.
-  """
+  """The unique identifier of the project to which the customer is associated."""
   project: UUID!
 }
 
-"""
-This response represents the payload returned after successfully creating a new `customer` record. It contains a single field customer which is a `Customer` object representing the newly created customer record.
-"""
+"""This response represents the payload returned after successfully creating a new `customer` record. It contains a single field customer which is a `Customer` object representing the newly created customer record."""
 type CreateCustomerPayload {
   """The customer record created by the create customer mutation."""
   customer: Customer!
@@ -274,11 +291,10 @@ type CreateCustomerPayload {
 
 """Input for creating a customer wallet."""
 input CreateCustomerWalletInput {
-  """Blockchain for wallet creation."""
-  assetType: AssetType!
-
   """The customer ID."""
   customer: UUID!
+  """Blockchain for wallet creation."""
+  assetType: AssetType!
 }
 
 """Response after wallet creation."""
@@ -287,15 +303,15 @@ type CreateCustomerWalletPayload {
 }
 
 input CreateDropInput {
-  blockchain: Blockchain!
-  creators: [CollectionCreatorInput!]!
-  endTime: DateTime
-  metadataJson: MetadataJsonInput!
-  price: Int
   project: UUID!
+  price: Int
   sellerFeeBasisPoints: Int
-  startTime: DateTime
   supply: Int
+  startTime: DateTime
+  endTime: DateTime
+  blockchain: Blockchain!
+  creators: [CreatorInput!]!
+  metadataJson: MetadataJsonInput!
 }
 
 type CreateDropPayload {
@@ -313,14 +329,10 @@ type CreateOrganizationPayload {
 
 """The input used for creating a project."""
 input CreateProjectInput {
-  """
-  The friendly name to denote the project from others belonging to the organization.
-  """
-  name: String!
-
   """The ID of the organization the project belongs to."""
   organization: UUID!
-
+  """The friendly name to denote the project from others belonging to the organization."""
+  name: String!
   """The URL of the project's profile image."""
   profileImageUrl: String
 }
@@ -332,16 +344,16 @@ type CreateProjectPayload {
 }
 
 input CreateWebhookInput {
-  description: String!
-  filterTypes: [FilterType!]!
-  organization: UUID!
-  projects: [UUID!]!
   url: String!
+  organization: UUID!
+  description: String!
+  projects: [UUID!]!
+  filterTypes: [FilterType!]!
 }
 
 type CreateWebhookPayload {
-  secret: String!
   webhook: Webhook!
+  secret: String!
 }
 
 enum CreationStatus {
@@ -353,29 +365,21 @@ enum CreationStatus {
   REJECTED
 }
 
-"""
-An `OAuth2` client application used for authentication with the Hub API.
-"""
-type Credential {
-  """A unique identifier for the credential."""
-  clientId: String!
-
-  """The datetime in UTC when the credential was created."""
-  createdAt: NaiveDateTime!
-
-  """This field represents the user who created the credential."""
-  createdBy: User
-
-  """The ID of the user who created the credential."""
-  createdById: UUID!
-
-  """A user-friendly name assigned to the credential."""
-  name: String!
-
-  """The ID of the organization the credential belongs to."""
-  organizationId: UUID!
+"""An attributed creator for a collection or mint."""
+input CreatorInput {
+  """The wallet address of the creator."""
+  address: String!
+  """
+  This field indicates whether the creator has been verified. This feature is only supported on the Solana blockchain.
+  ## References
+  [Metaplex Token Metadata - Verify creator instruction](https://docs.metaplex.com/programs/token-metadata/instructions#verify-a-creator)
+  """
+  verified: Boolean
+  """The share of royalties payout the creator should receive."""
+  share: Int!
 }
 
+<<<<<<< Updated upstream
 type CreditDeposit {
   cost: Float!
   createdAt: DateTime!
@@ -396,34 +400,62 @@ type Credits {
 """
 A customer record represents a user in your service and is used to group custodial wallets within a specific project. This allows for easy management of wallets and associated assets for a particular customer within your service.
 """
+=======
+"""An `OAuth2` client application used for authentication with the Hub API."""
+type Credential {
+  """A user-friendly name assigned to the credential."""
+  name: String!
+  """A unique identifier for the credential."""
+  clientId: String!
+  """The ID of the user who created the credential."""
+  createdById: UUID!
+  """The ID of the organization the credential belongs to."""
+  organizationId: UUID!
+  """The datetime in UTC when the credential was created."""
+  createdAt: NaiveDateTime!
+  """This field represents the user who created the credential."""
+  createdBy: User
+}
+
+type CreditDeposit {
+  id: UUID!
+  organization: UUID!
+  initiatedBy: UUID!
+  credits: Int!
+  cost: Float!
+  reason: DepositReason!
+  createdAt: DateTime!
+  perCreditCost: Float!
+}
+
+type Credits {
+  id: UUID!
+  balance: Int!
+  deposits: [CreditDeposit!]
+}
+
+"""A customer record represents a user in your service and is used to group custodial wallets within a specific project. This allows for easy management of wallets and associated assets for a particular customer within your service."""
+>>>>>>> Stashed changes
 type Customer {
+  """The unique identifier for the customer record."""
+  id: UUID!
+  """The ID of the project to which the customer record belongs."""
+  projectId: UUID!
+  """The datetime when the customer record was created."""
+  createdAt: NaiveDateTime!
+  """An optional datetime indicating the last time the customer record was updated. If the customer record has not been updated, this field will be `null`."""
+  updatedAt: NaiveDateTime
   """
   Returns all the wallet addresses associated with the customer. The blockchain of the address is not included and they are in no particular order. In the future, the blockchain may be indicated with a pattern of {blockchain}:{address}.
   This field returns null when there is no treasury assigned to the customer yet.
   """
   addresses: [String!]
-
-  """The datetime when the customer record was created."""
-  createdAt: NaiveDateTime!
-
-  """The unique identifier for the customer record."""
-  id: UUID!
-
   """The NFTs owned by any of the customers' wallets."""
   mints: [CollectionMint!]
-
-  """The ID of the project to which the customer record belongs."""
-  projectId: UUID!
-
-  """
-  The treasury assigned to the customer, which contains the customer's wallets.
-  """
+  """The NFTs minted by the customer."""
+  mintHistories: [MintHistory!]
+  """The treasury assigned to the customer, which contains the customer's wallets."""
   treasury: Treasury
-
-  """
-  An optional datetime indicating the last time the customer record was updated. If the customer record has not been updated, this field will be `null`.
-  """
-  updatedAt: NaiveDateTime
   wallet(assetId: AssetType): [Wallet!]
 }
 
@@ -469,6 +501,7 @@ enum DepositReason {
 }
 
 type Drop {
+<<<<<<< Updated upstream
   """The collection for which the drop is managing mints."""
   collection: Collection!
 
@@ -495,61 +528,71 @@ type Drop {
   """
   price: Int!
 
+=======
+  """The unique identifier for the drop."""
+  id: UUID!
+>>>>>>> Stashed changes
   """The identifier of the project to which the drop is associated."""
   projectId: UUID!
-
-  """A list of all NFT purchases from this drop."""
-  purchases: [Purchase!]
-
+  """The creation status of the drop."""
+  creationStatus: CreationStatus!
+  """The date and time in UTC when the drop is eligible for minting. A value of `null` means the drop can be minted immediately."""
+  startTime: DateTime
+  """The end date and time in UTC for the drop. A value of `null` means the drop does not end until it is fully minted."""
+  endTime: DateTime
+  """The cost to mint the drop in US dollars. When purchasing with crypto the user will be charged at the current conversion rate for the blockchain's native coin at the time of minting."""
+  price: Int!
+  """The user id of the person who created the drop."""
+  createdById: UUID!
+  """The date and time in UTC when the drop was created."""
+  createdAt: DateTime!
+  pausedAt: DateTime
   """
   The shutdown_at field represents the date and time in UTC when the drop was shutdown
   If it is null, the drop is currently not shutdown
   """
   shutdownAt: DateTime
+<<<<<<< Updated upstream
 
   """
   The date and time in UTC when the drop is eligible for minting. A value of `null` means the drop can be minted immediately.
   """
   startTime: DateTime
 
+=======
+  """The collection for which the drop is managing mints."""
+  collection: Collection!
+>>>>>>> Stashed changes
   """The current status of the drop."""
   status: DropStatus!
+  """A list of all NFT purchases from this drop."""
+  purchases: [MintHistory!] @deprecated(reason: "Use `mint_histories` under `Collection` Object instead.")
 }
 
 """The different phases of a drop."""
 enum DropStatus {
-  """The drop is still being created and is not ready to mint."""
-  CREATING
-
-  """The drop has expired and its end time has passed."""
-  EXPIRED
-
-  """The creation process for the drop has failed"""
-  FAILED
-
-  """The minting process for the collection is complete."""
-  MINTED
-
   """Actively minting."""
   MINTING
-
-  """The drop is temporarily paused and cannot be minted at the moment."""
-  PAUSED
-
+  """The minting process for the collection is complete."""
+  MINTED
   """The drop is scheduled for minting."""
   SCHEDULED
-
+  """The drop has expired and its end time has passed."""
+  EXPIRED
+  """The drop is still being created and is not ready to mint."""
+  CREATING
+  """The drop is temporarily paused and cannot be minted at the moment."""
+  PAUSED
   """The drop is permanently shut down and can no longer be minted."""
   SHUTDOWN
+  """The creation process for the drop has failed"""
+  FAILED
 }
 
-"""
-The input for editing the name of an existing credential by providing the `client_id` of the credential and the new `name` to be assigned.
-"""
+"""The input for editing the name of an existing credential by providing the `client_id` of the credential and the new `name` to be assigned."""
 input EditCredentialInput {
   """A unique string identifier assigned to the credential during creation."""
   clientId: String!
-
   """The new name to be assigned to the credential."""
   name: String!
 }
@@ -581,12 +624,12 @@ type EditProjectPayload {
 }
 
 input EditWebhookInput {
-  description: String!
-  disabled: Boolean
-  filterTypes: [FilterType!]!
-  projects: [UUID!]!
-  url: String!
   webhook: UUID!
+  url: String!
+  description: String!
+  projects: [UUID!]!
+  filterTypes: [FilterType!]!
+  disabled: Boolean
 }
 
 type EditWebhookPayload {
@@ -597,25 +640,21 @@ type EditWebhookPayload {
 type EventType {
   """Whether the event is archived or not."""
   archived: Boolean
-
   """The date and time when the event was created, in string format."""
   createdAt: String!
-
   """A description of the event."""
   description: String!
-
   """The name of the event."""
   name: String!
-
   """The JSON schema for the event payload."""
   schemas: JSON!
-
   """The date and time when the event was last updated, in string format."""
   updatedAt: String!
 }
 
 """An enumeration of event types that can be subscribed to by a webhook."""
 enum FilterType {
+<<<<<<< Updated upstream
   """Event triggered when a new customer is created"""
   CUSTOMER_CREATED
 
@@ -634,30 +673,57 @@ enum FilterType {
   """Event triggered when a mint has been successfully transfered"""
   MINT_TRANSFERED
 
+=======
+>>>>>>> Stashed changes
   """Event triggered when a new project is created"""
   PROJECT_CREATED
-
+  """Event triggered when a new customer is created"""
+  CUSTOMER_CREATED
+  """Event triggered when a new customer treasury is created"""
+  CUSTOMER_TREASURY_CREATED
   """Event triggered when a new wallet is created for a project"""
   PROJECT_WALLET_CREATED
+  """Event triggered when a new wallet is created for a customer"""
+  CUSTOMER_WALLET_CREATED
+  """Event triggered when a new drop is created"""
+  DROP_CREATED
+  """Event triggered when a new drop is minted"""
+  DROP_MINTED
+  """Event triggered when a mint has been successfully transfered"""
+  MINT_TRANSFERED
+  """Event triggered when a new collection is created"""
+  COLLECTION_CREATED
+  """Event triggered when an NFT is minted to a collection"""
+  MINTED_TO_COLLECTION
 }
 
 """The holder of a collection."""
 type Holder {
-  """The wallet address of the holder."""
-  address: String!
-
   """The collection ID that the holder owns."""
   collectionId: UUID!
-
-  """The specific mints from the collection that the holder owns."""
-  mints: [String!]!
-
+  """The wallet address of the holder."""
+  address: String!
   """The number of NFTs that the holder owns in the collection."""
   owns: Int!
+  """The specific mints from the collection that the holder owns."""
+  mints: [UUID!]!
+}
+
+"""Input object for importing a collection."""
+input ImportCollectionInput {
+  project: UUID!
+  collection: String!
+}
+
+"""Represents the result of a successful import collection mutation."""
+type ImportCollectionPayload {
+  """The status of the collection import."""
+  status: CreationStatus!
 }
 
 """An invitation sent to join a Holaplex organization."""
 type Invite {
+<<<<<<< Updated upstream
   """
   The datetime, in UTC, when the invitation to join the organization was created.
   """
@@ -671,46 +737,45 @@ type Invite {
   """
   email: String!
 
+=======
+>>>>>>> Stashed changes
   """The ID of the invitation."""
   id: UUID!
-
-  """
-  The member record that is generated after the invitation to join the organization is accepted. When the user has not accepted the invitation, this field returns `null`.
-  """
-  member: Member
-
-  """The organization to which the invitation to join belongs."""
-  organization: Organization
-
-  """The ID of the organization to which the invitation belongs."""
-  organizationId: UUID!
-
+  """The email address of the user being invited to become a member of the organization."""
+  email: String!
   """The status of the invitation."""
   status: InviteStatus!
-
+  """The ID of the organization to which the invitation belongs."""
+  organizationId: UUID!
+  """The ID of the user who created the invitation."""
+  createdBy: UUID!
+  """The datetime, in UTC, when the invitation to join the organization was created."""
+  createdAt: DateTime!
   """The datetime, in UTC, when the invitation status was updated."""
   updatedAt: DateTime
+<<<<<<< Updated upstream
+=======
+  """The member record that is generated after the invitation to join the organization is accepted. When the user has not accepted the invitation, this field returns `null`."""
+  member: Member
+  """The organization to which the invitation to join belongs."""
+  organization: Organization
+>>>>>>> Stashed changes
 }
 
 """Input required for inviting a member to the organization."""
 input InviteMemberInput {
-  """The email address of the invited user."""
-  email: String!
-
   """The ID of the organization."""
   organization: UUID!
+  """The email address of the invited user."""
+  email: String!
 }
 
 """The status of a member invitation."""
 enum InviteStatus {
   """The member invitation has been accepted by the invited user."""
   ACCEPTED
-
-  """
-  The member invitation has been revoked by an existing member of the organization and is no longer valid.
-  """
+  """The member invitation has been revoked by an existing member of the organization and is no longer valid."""
   REVOKED
-
   """The member invitation has been sent to the invited user."""
   SENT
 }
@@ -718,10 +783,9 @@ enum InviteStatus {
 """A scalar that can represent any JSON value."""
 scalar JSON
 
-"""
-A member of a Holaplex organization, representing an individual who has been granted access to the organization.
-"""
+"""A member of a Holaplex organization, representing an individual who has been granted access to the organization."""
 type Member {
+<<<<<<< Updated upstream
   """The datetime, in UTC, when the member joined the organization."""
   createdAt: DateTime!
 
@@ -758,13 +822,28 @@ type Member {
   """
   revokedAt: DateTime
 
+=======
+  """The ID of the user who has been granted access to the Holaplex organization as a member."""
+  userId: UUID!
+>>>>>>> Stashed changes
   """The user identity who is a member of the organization."""
   user: User
-
-  """
-  The ID of the user who has been granted access to the Holaplex organization as a member.
-  """
-  userId: UUID!
+  """The unique identifier of the member."""
+  id: UUID!
+  """The ID of the Holaplex organization to which the user has been granted access."""
+  organizationId: UUID!
+  """The datetime, in UTC, when the member joined the organization."""
+  createdAt: DateTime!
+  """The datetime, in UTC, when the member was revoked from the organization."""
+  revokedAt: DateTime
+  """The ID of the invitation that the member accepted to join the organization."""
+  inviteId: UUID!
+  """The datetime, in UTC, when the member was deactivated from the organization."""
+  deactivatedAt: DateTime
+  """The Holaplex organization to which the member belongs, representing an individual who has been granted access to the organization."""
+  organization: Organization
+  """The invitation to join the Holaplex organization that the member accepted in order to gain access to the organization."""
+  invite: Invite
 }
 
 """
@@ -773,42 +852,40 @@ The collection's associated metadata JSON.
 [Metaplex v1.1.0 Standard](https://docs.metaplex.com/programs/token-metadata/token-standard)
 """
 type MetadataJson {
-  """An optional animated version of the NFT art."""
-  animationUrl: String
-  attributes: [MetadataJsonAttribute!]
-
-  """The description of the NFT."""
-  description: String!
-
-  """
-  An optional URL where viewers can find more information on the NFT, such as the collection's homepage or Twitter page.
-  """
-  externalUrl: String
   id: UUID!
   identifier: String!
+<<<<<<< Updated upstream
   image: String
 
   """The image URI for the NFT."""
   imageOriginal: String!
 
+=======
+>>>>>>> Stashed changes
   """The assigned name of the NFT."""
   name: String!
-
-  """The symbol of the NFT."""
-  symbol: String!
-
   """The URI for the complete metadata JSON."""
   uri: String!
+  """The symbol of the NFT."""
+  symbol: String!
+  """The description of the NFT."""
+  description: String!
+  """The image URI for the NFT."""
+  imageOriginal: String!
+  """An optional animated version of the NFT art."""
+  animationUrl: String
+  """An optional URL where viewers can find more information on the NFT, such as the collection's homepage or Twitter page."""
+  externalUrl: String
+  attributes: [MetadataJsonAttribute!]
+  image: String!
 }
 
 """An attribute of the NFT."""
 type MetadataJsonAttribute {
   id: UUID!
   metadataJsonId: UUID!
-
   """The name of the attribute."""
   traitType: String!
-
   """The value of the attribute."""
   value: String!
 }
@@ -819,37 +896,50 @@ input MetadataJsonAttributeInput {
 }
 
 input MetadataJsonCollectionInput {
-  family: String
   name: String
+  family: String
 }
 
 input MetadataJsonFileInput {
-  fileType: String
   uri: String
+  fileType: String
 }
 
 input MetadataJsonInput {
-  animationUrl: String
-  attributes: [MetadataJsonAttributeInput!]!
-  collection: MetadataJsonCollectionInput
-  description: String!
-  externalUrl: String
-  image: String!
   name: String!
-  properties: MetadataJsonPropertyInput
   symbol: String!
+  description: String!
+  image: String!
+  animationUrl: String
+  collection: MetadataJsonCollectionInput
+  attributes: [MetadataJsonAttributeInput!]!
+  externalUrl: String
+  properties: MetadataJsonPropertyInput
 }
 
 input MetadataJsonPropertyInput {
-  category: String
   files: [MetadataJsonFileInput!]
+  category: String
 }
 
+<<<<<<< Updated upstream
 """
 Represents input data for `mint_edition` mutation with a UUID and recipient as fields
 """
+=======
+type MintCreator {
+  collectionMintId: UUID!
+  address: String!
+  verified: Boolean!
+  share: Int!
+}
+
+"""Represents input data for `mint_edition` mutation with a UUID and recipient as fields"""
+>>>>>>> Stashed changes
 input MintDropInput {
+  """The ID of the drop to mint to"""
   drop: UUID!
+  """The recipient of the mint"""
   recipient: String!
 }
 
@@ -858,138 +948,126 @@ type MintEditionPayload {
   collectionMint: CollectionMint!
 }
 
+"""A record of a minted NFT."""
+type MintHistory {
+  id: UUID!
+  """The ID of the NFT minted."""
+  mintId: UUID!
+  """The wallet address of the buyer."""
+  wallet: String!
+  """The signature of the transaction, if any."""
+  txSignature: String
+  """The status of the creation of the NFT."""
+  status: CreationStatus!
+  """The date and time when the purchase was created."""
+  createdAt: DateTime!
+  """The ID of the collection that facilitated the mint, if any."""
+  collectionId: UUID!
+  """The minted NFT."""
+  mint: CollectionMint
+}
+
+"""Represents input data for `mint_to_collection` mutation with a collection ID, recipient, metadata, and optional seller fee basis points as fields"""
+input MintToCollectionInput {
+  """The ID of the collection to mint to"""
+  collection: UUID!
+  """The recipient of the mint"""
+  recipient: String!
+  """The metadata of the mint"""
+  metadataJson: MetadataJsonInput!
+  """The optional seller fee basis points"""
+  sellerFeeBasisPoints: Int
+  """
+  The creators to be assigned to the NFT.
+  For Solana, this can be up to five creators. If the project treasury wallet is set as a creator and verified set to true the creator will be verified on chain.
+  For Polygon, this can be only 1 creator.
+  """
+  creators: [CreatorInput!]!
+  compressed: Boolean
+}
+
+"""Represents payload data for `mint_to_collection` mutation"""
+type MintToCollectionPayload {
+  """The minted NFT"""
+  collectionMint: CollectionMint!
+}
+
 type Mutation {
-  """
-  Accept an invite to the organization.
-  # Error
-  This mutation will produce an error if it is unable to connect to the database or if the user's email does not match the invitation.
-  """
-  acceptInvite(input: AcceptInviteInput!): AcceptInvitePayload!
-
-  """
-  Create an API credential to authenticate and authorize API requests to the Holaplex Hub.
-  """
+  """Create an API credential to authenticate and authorize API requests to the Holaplex Hub."""
   createCredential(input: CreateCredentialInput!): CreateCredentialPayload!
-
-  """
-  This mutation creates a customer record and a corresponding treasury that holds custodial wallets on behalf of a user. The treasury serves as a way to group the customer's wallets together. This makes it easier to manage wallets and associated assets for the user within a specific project. The customer and treasury are associated with the specified project ID. The response includes the newly created customer record. If there is an error connecting to the database or unable to emit a customer created event, the mutation will fail and an error will be returned.
-  """
-  createCustomer(input: CreateCustomerInput!): CreateCustomerPayload!
-
-  """
-  Create a wallet for a customer and assign it to the customer's treasury account.
-  
-  # Errors
-  The mutation will result in an error if it is unable to interact with the database or communicate with Fireblocks.
-  """
-  createCustomerWallet(input: CreateCustomerWalletInput!): CreateCustomerWalletPayload!
-
-  """
-  This mutation creates a new NFT drop and its associated collection. The drop returns immediately with a creation status of CREATING. You can [set up a webhook](https://docs.holaplex.dev/hub/For%20Developers/webhooks-overview) to receive a notification when the drop is ready to be minted.
-  Error
-  If the drop cannot be saved to the database or fails to be emitted for submission to the desired blockchain, the mutation will result in an error.
-  """
-  createDrop(input: CreateDropInput!): CreateDropPayload!
-
-  """
-  This mutation creates a new Holaplex organization, with the user triggering the mutation automatically assigned as the owner of the organization.
-  # Errors
-  This mutation produces an error if it is unable to connect to the database, emit the organization creation event, or if the user is not set in the X-USER-ID header.
-  """
-  createOrganization(input: CreateOrganizationInput!): CreateOrganizationPayload!
-
-  """
-  This mutation creates a new project under the specified organization.
-  
-  # Errors
-  This mutation produces an error if it is unable to connect to the database, emit the project creation event, or if the user is not set in the X-USER-ID header.
-  """
-  createProject(input: CreateProjectInput!): CreateProjectPayload!
-
-  """
-  Res
-  
-  # Errors
-  This function fails if ...
-  """
-  createWebhook(input: CreateWebhookInput!): CreateWebhookPayload!
-
-  """
-  Returns member object on success
-  
-  # Errors
-  This code may result in an error if the update to the database fails or if it fails to produce an event.
-  """
-  deactivateMember(input: DeactivateMemberInput!): Member!
-
-  """Delete the OAuth2 API credential."""
-  deleteCredential(input: DeleteCredentialInput!): DeleteCredentialPayload!
-
-  """
-  Res
-  
-  # Errors
-  This function fails if ...
-  """
-  deleteWebhook(input: DeleteWebhookInput!): DeleteWebhookPayload!
-
   """Edit the name assigned to the API credential."""
   editCredential(input: EditCredentialInput!): EditCredentialPayload!
-
-  """This mutation edits the name or profile image of the organization."""
-  editOrganization(input: EditOrganizationInput!): EditOrganizationPayload!
-
-  """This mutations edits the name and profile image of the project."""
-  editProject(input: EditProjectInput!): EditProjectPayload!
-
+  """Delete the OAuth2 API credential."""
+  deleteCredential(input: DeleteCredentialInput!): DeleteCredentialPayload!
+  """This mutation creates a customer record and a corresponding treasury that holds custodial wallets on behalf of a user. The treasury serves as a way to group the customer's wallets together. This makes it easier to manage wallets and associated assets for the user within a specific project. The customer and treasury are associated with the specified project ID. The response includes the newly created customer record. If there is an error connecting to the database or unable to emit a customer created event, the mutation will fail and an error will be returned."""
+  createCustomer(input: CreateCustomerInput!): CreateCustomerPayload!
   """
-  Res
-  
-  # Errors
-  This function fails if ...
+  This mutation creates a new NFT collection. The collection returns immediately with a creation status of CREATING. You can [set up a webhook](https://docs.holaplex.dev/hub/For%20Developers/webhooks-overview) to receive a notification when the collection is ready to be minted.
+  For Solana, the collection is a sized Metaplex certified collection.
   """
-  editWebhook(input: EditWebhookInput!): EditWebhookPayload!
-
-  """
-  To invite a person to the organization, provide their email address.
-  # Error
-  This mutation will produce an error if it is unable to connect to the database or if there is no associated user set in the X-USER-ID header.
-  """
-  inviteMember(input: InviteMemberInput!): Invite!
-  mint(drop: ID!): CollectionMint
-
+  createCollection(input: CreateCollectionInput!): CreateCollectionPayload!
+  """This mutation tries to re-create a failed collection."""
+  retryCollection(input: RetryCollectionInput!): CreateCollectionPayload!
+  """This mutation imports a Solana collection. See the [guide](https://docs.holaplex.com/hub/Guides/import-collection) for importing instructions."""
+  importSolanaCollection(input: ImportCollectionInput!): ImportCollectionPayload!
+  """Update a collection attributes or creators."""
+  patchCollection(input: PatchCollectionInput!): PatchCollectionPayload!
   """
   This mutation mints an NFT edition for a specific drop ID. The mint returns immediately with a creation status of CREATING. You can [set up a webhook](https://docs.holaplex.dev/hub/For%20Developers/webhooks-overview) to receive a notification when the mint is accepted by the blockchain.
   # Errors
   If the mint cannot be saved to the database or fails to be emitted for submission to the desired blockchain, the mutation will result in an error.
   """
   mintEdition(input: MintDropInput!): MintEditionPayload!
-
   """
-  This mutation allows updating a drop and it's associated collection by ID.
-  It returns an error if it fails to reach the database, emit update events or assemble the on-chain transaction.
-  Returns the `PatchDropPayload` object on success.
-  """
-  patchDrop(input: PatchDropInput!): PatchDropPayload!
-
-  """
-  This mutation allows for the temporary blocking of the minting of editions and can be resumed by calling the resumeDrop mutation.
-  """
-  pauseDrop(input: PauseDropInput!): PauseDropPayload!
-
-  """
-  Returns member object on success
-  
+  This mutation retries a mint which failed or is in pending state. The mint returns immediately with a creation status of CREATING. You can [set up a webhook](https://docs.holaplex.dev/hub/For%20Developers/webhooks-overview) to receive a notification when the mint is accepted by the blockchain.
   # Errors
-  This code may result in an error if the update to the database fails or if it fails to produce an event.
+  If the mint cannot be saved to the database or fails to be emitted for submission to the desired blockchain, the mutation will result in an error.
   """
-  reactivateMember(input: ReactivateMemberInput!): Member!
-
+  retryMintEdition(input: RetryMintEditionInput!): RetryMintEditionPayload!
   """
-  This mutation resumes a paused drop, allowing minting of editions to be restored
+  This mutation mints either a compressed or standard NFT to a collection.
+  For Solana, the mint is verified and the collection size incremented.
   """
+  mintToCollection(input: MintToCollectionInput!): MintToCollectionPayload!
+  """
+  This mutation updates a mint.
+  # Errors
+  If the mint cannot be saved to the database or fails to be emitted for submission to the desired blockchain, the mutation will result in an error.
+  """
+  updateMint(input: UpdateMintInput!): UpdateMintPayload!
+  """
+  This mutation retries updating a mint that failed by providing the ID of the `update_history`.
+  # Errors
+  If the mint cannot be saved to the database or fails to be emitted for submission to the desired blockchain, the mutation will result in an error.
+  """
+  retryUpdateMint(input: RetryUpdateMintInput!): RetryUpdateMintPayload!
+  retryMintToCollection(input: RetryMintEditionInput!): RetryMintEditionPayload!
+  """
+  Transfers an asset from one user to another on a supported blockchain network.
+  The mutation supports transferring standard or compressed NFTs.
+  The mutation is rejected if the wallet address is not managed by HUB.
+  """
+  transferAsset(input: TransferAssetInput!): TransferAssetPayload!
+  """
+  This mutation creates a new NFT drop and its associated collection. The drop returns immediately with a creation status of CREATING. You can [set up a webhook](https://docs.holaplex.dev/hub/For%20Developers/webhooks-overview) to receive a notification when the drop is ready to be minted.
+  Error
+  If the drop cannot be saved to the database or fails to be emitted for submission to the desired blockchain, the mutation will result in an error.
+  """
+  createDrop(input: CreateDropInput!): CreateDropPayload!
+  """
+  This mutation retries an existing drop.
+  The drop returns immediately with a creation status of CREATING.
+  You can [set up a webhook](https://docs.holaplex.dev/hub/For%20Developers/webhooks-overview) to receive a notification when the drop is ready to be minted.
+  Errors
+  The mutation will fail if the drop and its related collection cannot be located,
+  if the transaction response cannot be built,
+  or if the transaction event cannot be emitted.
+  """
+  retryDrop(input: RetryDropInput!): CreateDropPayload!
+  """This mutation allows for the temporary blocking of the minting of editions and can be resumed by calling the resumeDrop mutation."""
+  pauseDrop(input: PauseDropInput!): PauseDropPayload!
+  """This mutation resumes a paused drop, allowing minting of editions to be restored"""
   resumeDrop(input: ResumeDropInput!): ResumeDropPayload!
-
   """
   This mutation retries an existing drop.
   The drop returns immediately with a creation status of CREATING.
@@ -1016,6 +1094,7 @@ type Mutation {
   Fails if the drop or collection is not found, or if updating the drop record fails.
   """
   shutdownDrop(input: ShutdownDropInput!): ShutdownDropPayload!
+<<<<<<< Updated upstream
 
   """
   Transfers an asset from one user to another on a supported blockchain network.
@@ -1038,6 +1117,85 @@ type Mutation {
   If there is an error while sending the TransferAsset event to the event producer.
   """
   transferAsset(input: TransferAssetInput!): TransferAssetPayload!
+=======
+  """
+  This mutation allows updating a drop and it's associated collection by ID.
+  It returns an error if it fails to reach the database, emit update events or assemble the on-chain transaction.
+  Returns the `PatchDropPayload` object on success.
+  """
+  patchDrop(input: PatchDropInput!): PatchDropPayload!
+  """
+  This mutation creates a new Holaplex organization, with the user triggering the mutation automatically assigned as the owner of the organization.
+  # Errors
+  This mutation produces an error if it is unable to connect to the database, emit the organization creation event, or if the user is not set in the X-USER-ID header.
+  """
+  createOrganization(input: CreateOrganizationInput!): CreateOrganizationPayload!
+  """This mutation edits the name or profile image of the organization."""
+  editOrganization(input: EditOrganizationInput!): EditOrganizationPayload!
+  """
+  This mutation creates a new project under the specified organization.
+  
+  # Errors
+  This mutation produces an error if it is unable to connect to the database, emit the project creation event, or if the user is not set in the X-USER-ID header.
+  """
+  createProject(input: CreateProjectInput!): CreateProjectPayload!
+  """This mutations edits the name and profile image of the project."""
+  editProject(input: EditProjectInput!): EditProjectPayload!
+  """
+  To invite a person to the organization, provide their email address.
+  # Error
+  This mutation will produce an error if it is unable to connect to the database or if there is no associated user set in the X-USER-ID header.
+  """
+  inviteMember(input: InviteMemberInput!): Invite!
+  """
+  Accept an invite to the organization.
+  # Error
+  This mutation will produce an error if it is unable to connect to the database or if the user's email does not match the invitation.
+  """
+  acceptInvite(input: AcceptInviteInput!): AcceptInvitePayload!
+  """
+  Returns member object on success
+  
+  # Errors
+  This code may result in an error if the update to the database fails or if it fails to produce an event.
+  """
+  deactivateMember(input: DeactivateMemberInput!): Member!
+  """
+  Returns member object on success
+  
+  # Errors
+  This code may result in an error if the update to the database fails or if it fails to produce an event.
+  """
+  reactivateMember(input: ReactivateMemberInput!): Member!
+  """
+  Create a wallet for a customer and assign it to the customer's treasury account.
+  
+  # Errors
+  The mutation will result in an error if it is unable to interact with the database or communicate with Fireblocks.
+  """
+  createCustomerWallet(input: CreateCustomerWalletInput!): CreateCustomerWalletPayload!
+  """
+  Res
+  
+  # Errors
+  This function fails if ...
+  """
+  createWebhook(input: CreateWebhookInput!): CreateWebhookPayload!
+  """
+  Res
+  
+  # Errors
+  This function fails if ...
+  """
+  deleteWebhook(input: DeleteWebhookInput!): DeleteWebhookPayload!
+  """
+  Res
+  
+  # Errors
+  This function fails if ...
+  """
+  editWebhook(input: EditWebhookInput!): EditWebhookPayload!
+>>>>>>> Stashed changes
 }
 
 """
@@ -1049,6 +1207,7 @@ ISO 8601 combined date and time without timezone.
 """
 scalar NaiveDateTime
 
+<<<<<<< Updated upstream
 """
 A Holaplex organization is the top-level account within the Holaplex ecosystem. Each organization has a single owner who can invite members to join. Organizations use projects to organize NFT campaigns or initiatives.
 """
@@ -1057,7 +1216,28 @@ type Organization {
   The datetime, in UTC, when the Holaplex organization was created by its owner.
   """
   createdAt: DateTime!
+=======
+"""A record of a transfer of an NFT."""
+type NftTransfer {
+  """The ID of the NFT transfer."""
+  id: UUID!
+  """The transaction signature of the transfer."""
+  txSignature: String
+  """The ID of the NFT that was transferred."""
+  collectionMintId: UUID!
+  """The wallet address of the sender."""
+  sender: String!
+  """The wallet address of the recipient."""
+  recipient: String!
+  """The date and time when the transfer was created."""
+  createdAt: DateTime!
+}
+>>>>>>> Stashed changes
 
+"""A Holaplex organization is the top-level account within the Holaplex ecosystem. Each organization has a single owner who can invite members to join. Organizations use projects to organize NFT campaigns or initiatives."""
+type Organization {
+  """The unique identifier assigned to the Holaplex organization, which is used to distinguish it from other organizations within the Holaplex ecosystem."""
+  id: UUID!
   """
   Get a single API credential by client ID.
   
@@ -1071,7 +1251,6 @@ type Organization {
   The API credential with the specified client ID.
   """
   credential(clientId: String!): Credential!
-
   """
   Get a list of API credentials associated with this organization.
   
@@ -1086,12 +1265,12 @@ type Organization {
   A list of API credentials associated with this organization.
   """
   credentials(limit: Int, offset: Int): [Credential!]!
-
   """
   Define an asynchronous function to load the credits for the organization
   Returns `Credits` object
   #Errors
   returns error if credits_loader is not found in the context or if the loader fails to load the credits
+<<<<<<< Updated upstream
   """
   credits: Credits
 
@@ -1108,30 +1287,30 @@ type Organization {
   """
   deductionTotals: [DeductionTotals!]
 
+=======
   """
-  The unique identifier assigned to the Holaplex organization, which is used to distinguish it from other organizations within the Holaplex ecosystem.
+  credits: Credits
+>>>>>>> Stashed changes
   """
-  id: UUID!
-
+  Define an asynchronous function to load the total credits deducted for each action
+  Returns `DeductionTotals` object
+  #Errors
+  returns error if total_deductions_loader is not found in the context or if the loader fails to load the total deductions
   """
-  The invitations to join the Holaplex organization that have been sent to email addresses and are either awaiting or have been accepted by the recipients.
-  """
-  invites(status: InviteStatus): [Invite!]!
-
-  """
-  The members who have been granted access to the Holaplex organization, represented by individuals who have been invited and accepted the invitation to join the organization.
-  """
-  members: [Member!]
-
-  """
-  The name given to the Holaplex organization, which is used to identify it within the Holaplex ecosystem and to its members and users.
-  """
+  deductionTotals: [DeductionTotals!]
+  """The name given to the Holaplex organization, which is used to identify it within the Holaplex ecosystem and to its members and users."""
   name: String!
-
-  """
-  The owner of the Holaplex organization, who has created the organization and has full control over its settings and members.
-  """
+  """The datetime, in UTC, when the Holaplex organization was created by its owner."""
+  createdAt: DateTime!
+  """The datetime, in UTC, when the Holaplex organization was deactivated by its owner."""
+  deactivatedAt: DateTime
+  """The optional profile image associated with the Holaplex organization, which can be used to visually represent the organization."""
+  profileImageUrlOriginal: String
+  """The members who have been granted access to the Holaplex organization, represented by individuals who have been invited and accepted the invitation to join the organization."""
+  members: [Member!]
+  """The owner of the Holaplex organization, who has created the organization and has full control over its settings and members."""
   owner: Owner
+<<<<<<< Updated upstream
   profileImageUrl: String
 
   """
@@ -1142,8 +1321,29 @@ type Organization {
   """
   The projects that have been created and are currently associated with the Holaplex organization, which are used to organize NFT campaigns or initiatives within the organization.
   """
+=======
+  """The invitations to join the Holaplex organization that have been sent to email addresses and are either awaiting or have been accepted by the recipients."""
+  invites(status: InviteStatus): [Invite!]!
+  """The projects that have been created and are currently associated with the Holaplex organization, which are used to organize NFT campaigns or initiatives within the organization."""
+>>>>>>> Stashed changes
   projects: [Project!]!
-
+  profileImageUrl: String
+  """
+  Retrieves a list of all webhooks associated with the organization.
+  
+  # Arguments
+  
+  * `ctx` - The context object representing the current request.
+  
+  # Returns
+  
+  A vector of all Webhook objects associated with the Organization, or None if there are none.
+  
+  # Errors
+  
+  This function will return an error if the data context cannot be retrieved.
+  """
+  webhooks: [Webhook!]
   """
   Retrieves a specific webhook associated with the organization, based on its ID.
   
@@ -1161,76 +1361,67 @@ type Organization {
   This function will return an error if the data context cannot be retrieved.
   """
   webhook(id: UUID!): Webhook
-
-  """
-  Retrieves a list of all webhooks associated with the organization.
-  
-  # Arguments
-  
-  * `ctx` - The context object representing the current request.
-  
-  # Returns
-  
-  A vector of all Webhook objects associated with the Organization, or None if there are none.
-  
-  # Errors
-  
-  This function will return an error if the data context cannot be retrieved.
-  """
-  webhooks: [Webhook!]
 }
 
-"""
-The owner of the Holaplex organization, who is the individual that created the organization.
-"""
+"""The owner of the Holaplex organization, who is the individual that created the organization."""
 type Owner {
+<<<<<<< Updated upstream
   """The datetime, in UTC, when the organization was created."""
   createdAt: DateTime!
 
   """
   The unique identifier assigned to the record of the user who created the Holaplex organization and serves as its owner, which is used to distinguish their record from other records within the Holaplex ecosystem.
   """
+=======
+  """The ID of the user who created the Holaplex organization and serves as its owner."""
+  userId: UUID!
+  """The user identity associated with the owner of the organization."""
+  user: User
+  """The unique identifier assigned to the record of the user who created the Holaplex organization and serves as its owner, which is used to distinguish their record from other records within the Holaplex ecosystem."""
+>>>>>>> Stashed changes
   id: UUID!
-
-  """The Holaplex organization owned by the user."""
-  organization: Organization
-
   """
   The ID assigned to the Holaplex organization owned by the user, which is used to distinguish it from other organizations within the Holaplex ecosystem."
   """
   organizationId: UUID!
+  """The datetime, in UTC, when the organization was created."""
+  createdAt: DateTime!
+  """The Holaplex organization owned by the user."""
+  organization: Organization
+}
 
-  """The user identity associated with the owner of the organization."""
-  user: User
+"""Input object for patching a collection by ID."""
+input PatchCollectionInput {
+  """The unique identifier of the drop"""
+  id: UUID!
+  """The new metadata JSON for the drop"""
+  metadataJson: MetadataJsonInput
+  """The creators of the drop"""
+  creators: [CreatorInput!]
+}
 
-  """
-  The ID of the user who created the Holaplex organization and serves as its owner.
-  """
-  userId: UUID!
+"""Represents the result of a successful patch collection mutation."""
+type PatchCollectionPayload {
+  """The collection that has been patched."""
+  collection: Collection!
 }
 
 """Input object for patching a drop and associated collection by ID"""
 input PatchDropInput {
-  """The creators of the drop"""
-  creators: [CollectionCreatorInput!]
-
-  """The new end time for the drop in UTC"""
-  endTime: DateTime
-
   """The unique identifier of the drop"""
   id: UUID!
-
-  """The new metadata JSON for the drop"""
-  metadataJson: MetadataJsonInput
-
   """The new price for the drop in the native token of the blockchain"""
   price: Int
-
-  """The new seller fee basis points for the drop"""
-  sellerFeeBasisPoints: Int
-
   """The new start time for the drop in UTC"""
   startTime: DateTime
+  """The new end time for the drop in UTC"""
+  endTime: DateTime
+  """The new seller fee basis points for the drop"""
+  sellerFeeBasisPoints: Int
+  """The new metadata JSON for the drop"""
+  metadataJson: MetadataJsonInput
+  """The creators of the drop"""
+  creators: [CreatorInput!]
 }
 
 """Represents the result of a successful patch drop mutation."""
@@ -1250,10 +1441,9 @@ type PauseDropPayload {
   drop: Drop!
 }
 
-"""
-A Holaplex project that belongs to an organization. Projects are used to group unique NFT campaigns or initiatives, and are used to assign objects that end customers will interact with, such as drops and wallets.
-"""
+"""A Holaplex project that belongs to an organization. Projects are used to group unique NFT campaigns or initiatives, and are used to assign objects that end customers will interact with, such as drops and wallets."""
 type Project {
+<<<<<<< Updated upstream
   """The datetime, in UTC, when the project was created."""
   createdAt: DateTime!
 
@@ -1274,17 +1464,27 @@ type Project {
   """The drops associated with the project."""
   drops: [Drop!]
 
+=======
+>>>>>>> Stashed changes
   """The unique identifier assigned to the Holaplex project."""
   id: UUID!
-
-  """
-  The friendly name assigned to the Holaplex project to differentiate it from other projects belonging to the organization.
-  """
+  """Retrieve a customer record associated with the project, using its ID."""
+  customer(id: UUID!): Customer
+  """Retrieve all customer records associated with a given project."""
+  customers: [Customer!]
+  """The drops associated with the project."""
+  drops: [Drop!]
+  """Look up a drop associated with the project by its ID."""
+  drop(id: UUID!): Drop @deprecated(reason: "Use `drop` root query field instead")
+  """The collections associated with the project."""
+  collections: [Collection!]
+  """Look up a collection associated with the project by its ID."""
+  collection(id: UUID!): Collection @deprecated(reason: "Use `collection` root query field instead")
+  """The friendly name assigned to the Holaplex project to differentiate it from other projects belonging to the organization."""
   name: String!
-  organization: Organization
-
   """The ID of the Holaplex organization to which the project belongs."""
   organizationId: UUID!
+<<<<<<< Updated upstream
   profileImageUrl: String
 
   """
@@ -1328,6 +1528,21 @@ type Purchase {
 type Query {
   collections: [CollectionMint]
 
+=======
+  """The datetime, in UTC, when the project was created."""
+  createdAt: DateTime!
+  """The date and time in Coordinated Universal Time (UTC) when the Holaplex project was created. Once a project is deactivated, objects that were assigned to the project can no longer be interacted with."""
+  deactivatedAt: DateTime
+  """The optional profile image associated with the project, which can be used to visually represent the project."""
+  profileImageUrlOriginal: String
+  organization: Organization
+  profileImageUrl: String
+  """The treasury assigned to the project, which contains the project's wallets."""
+  treasury: Treasury
+}
+
+type Query {
+>>>>>>> Stashed changes
   """
   Returns a list of `ActionCost` which represents the cost of each action on different blockchains.
   
@@ -1335,9 +1550,26 @@ type Query {
   This function fails if it fails to get `CreditsClient` or if blockchain enum conversion fails.
   """
   creditSheet: [ActionCost!]!
+<<<<<<< Updated upstream
   drop(id: ID!): Drop
   drops: [Drop!]
 
+=======
+  """Retrieve a user identity by providing their ID."""
+  user(id: UUID!): User
+  """Look up a `collection_mint` by its ID."""
+  mint(id: UUID!): CollectionMint
+  """Look up a `collection` by its ID."""
+  collection(id: UUID!): Collection
+  """Look up a `drop` by its ID."""
+  drop(id: UUID!): Drop
+  """Query an organization by its ID, this query returns `null` if the organization does not exist."""
+  organization(id: UUID!): Organization
+  """Query a project by it's ID, this query returns `null` if the project does not exist."""
+  project(id: UUID!): Project
+  """Retrieve a member invitation by its ID."""
+  invite(id: UUID!): Invite
+>>>>>>> Stashed changes
   """
   Returns a list of event types that an external service can subscribe to.
   
@@ -1350,6 +1582,7 @@ type Query {
   This function returns an error if there was a problem with retrieving the event types.
   """
   eventTypes: [EventType!]!
+<<<<<<< Updated upstream
 
   """Retrieve a member invitation by its ID."""
   invite(id: UUID!): Invite
@@ -1367,6 +1600,8 @@ type Query {
 
   """Retrieve a user identity by providing their ID."""
   user(id: UUID!): User
+=======
+>>>>>>> Stashed changes
 }
 
 input ReactivateMemberInput {
@@ -1384,22 +1619,51 @@ type ResumeDropPayload {
   drop: Drop!
 }
 
+<<<<<<< Updated upstream
+=======
+"""Input object for retrying a collection by ID."""
+input RetryCollectionInput {
+  id: UUID!
+}
+
+>>>>>>> Stashed changes
 input RetryDropInput {
   drop: UUID!
 }
 
+<<<<<<< Updated upstream
 """
 Represents input data for `retry_mint` mutation with an ID as a field of type UUID
 """
 input RetryMintInput {
+=======
+"""Represents input data for `retry_mint` mutation with an ID as a field of type UUID"""
+input RetryMintEditionInput {
+>>>>>>> Stashed changes
   id: UUID!
 }
 
 """Represents payload data for `retry_mint` mutation"""
+<<<<<<< Updated upstream
 type RetryMintPayload {
   collectionMint: CollectionMint!
 }
 
+=======
+type RetryMintEditionPayload {
+  collectionMint: CollectionMint!
+}
+
+input RetryUpdateMintInput {
+  """Update History ID"""
+  revisionId: UUID!
+}
+
+type RetryUpdateMintPayload {
+  status: CreationStatus!
+}
+
+>>>>>>> Stashed changes
 """Represents the input fields for shutting down a drop"""
 input ShutdownDropInput {
   drop: UUID!
@@ -1415,6 +1679,7 @@ input TransferAssetInput {
   id: UUID!
   recipient: String!
 }
+<<<<<<< Updated upstream
 
 type TransferAssetPayload {
   mint: CollectionMint!
@@ -1426,22 +1691,77 @@ A collection of wallets assigned to different entities in the Holaplex ecosystem
 type Treasury {
   """The creation DateTimeWithTimeZone of the vault."""
   createdAt: DateTime!
+=======
+>>>>>>> Stashed changes
 
+type TransferAssetPayload {
+  mint: CollectionMint!
+}
+
+"""A collection of wallets assigned to different entities in the Holaplex ecosystem."""
+type Treasury {
   """The unique identifier for the treasury."""
   id: UUID!
-
   """
   The associated Fireblocks vault ID.
   ## Reference
   [Vault Objects](https://docs.fireblocks.com/api/#vault-objects)
   """
   vaultId: String!
-
-  """Lookup a wallet based on its `asset_type`."""
-  wallet(assetType: AssetType!): Wallet
-
+  """The creation DateTimeWithTimeZone of the vault."""
+  createdAt: DateTime!
   """The treasury's associated wallets."""
   wallets: [Wallet!]
+  """Lookup a wallet based on its `asset_type`."""
+  wallet(assetType: AssetType!): Wallet
+}
+
+type UpdateHistory {
+  id: UUID!
+  mintId: UUID!
+  txnSignature: String
+  status: CreationStatus!
+  creditDeductionId: UUID!
+  createdBy: UUID!
+  createdAt: NaiveDateTime!
+}
+
+input UpdateMintInput {
+  """The ID of the mint to be updated"""
+  id: UUID!
+  """The metadata of the mint"""
+  metadataJson: MetadataJsonInput!
+  """The optional seller fee basis points"""
+  sellerFeeBasisPoints: Int
+  """
+  The creators to be assigned to the NFT.
+  For Solana, this can be up to five creators. If the project treasury wallet is set as a creator and verified set to true the creator will be verified on chain.
+  For Polygon, this can be only 1 creator.
+  """
+  creators: [CreatorInput!]!
+}
+
+type UpdateMintPayload {
+  collectionMint: CollectionMint!
+}
+
+"""A unique user identity across the entire Holaplex ecosystem. A user can be associated with multiple organizations, but they are not required to have separate login credentials."""
+type User {
+  """The unique identifier for the user identity."""
+  id: UUID!
+  """The first name of the user identity."""
+  firstName: String!
+  """The last name of the user identity."""
+  lastName: String!
+  """The email address associated with the user identity."""
+  email: String!
+  """The profile image associated with the user identity."""
+  profileImage: String
+  """The timestamp in UTC when the user identity was created."""
+  createdAt: String!
+  """The timestamp in UTC when the user identity was last updated."""
+  updatedAt: String!
+  affiliations: [Affiliation!]!
 }
 
 """
@@ -1456,6 +1776,7 @@ entities without requiring a central allocating authority.
 """
 scalar UUID
 
+<<<<<<< Updated upstream
 """
 A unique user identity across the entire Holaplex ecosystem. A user can be associated with multiple organizations, but they are not required to have separate login credentials.
 """
@@ -1508,47 +1829,48 @@ type Wallet {
   mints: [CollectionMint!]
   removedAt: DateTime
   treasuryId: UUID!
+=======
+"""A blockchain wallet is a digital wallet that allows users to securely store, manage, and transfer their cryptocurrencies or other digital assets on a blockchain network."""
+type Wallet {
+  """The wallet address."""
+  address: String
+  """The NFTs that were minted from Holaplex and are owned by the wallet's address."""
+  mints: [CollectionMint!]
+  treasuryId: UUID!
+  createdAt: DateTime!
+  removedAt: DateTime
+  createdBy: UUID!
+  """The wallet's associated blockchain."""
+  assetId: AssetType!
+  id: UUID!
+  deductionId: UUID
+>>>>>>> Stashed changes
 }
 
-"""
-A webhook represents an endpoint registered to receive notifications for specific events within a project.
-"""
+"""A webhook represents an endpoint registered to receive notifications for specific events within a project."""
 type Webhook {
-  """Retrieves the channels the webhook is subscribed to."""
-  channels: [String!]!
-
-  """Retrieves the creation datetime of the webhook."""
-  createdAt: NaiveDateTime!
-
-  """The user who created the webhook."""
-  createdBy: User
-
   """Retrieves the ID of the user who created the webhook."""
   createdById: UUID!
-
-  """Retrieves the webhook's description."""
-  description: String!
-
-  """Retrieves the ID of the webhook's endpoint."""
-  endpointId: String!
-
-  """Retrieves the events the webhook is subscribed to."""
-  events: [FilterType!]!
-
+  """The user who created the webhook."""
+  createdBy: User
   """Retrieves the ID of the webhook."""
   id: UUID!
-
-  """Retrieves the ID of the organization the webhook belongs to."""
-  organizationId: UUID!
-
-  """
-  This field specifies the list of projects for which an associated object will trigger a webhook event.
-  """
+  """Retrieves the channels the webhook is subscribed to."""
+  channels: [String!]!
+  """This field specifies the list of projects for which an associated object will trigger a webhook event."""
   projects: [Project!]!
-
-  """Retrieves the last update datetime of the webhook."""
-  updatedAt: NaiveDateTime
-
+  """Retrieves the ID of the webhook's endpoint."""
+  endpointId: String!
   """Retrieves the URL of the webhook's endpoint."""
   url: String!
+  """Retrieves the events the webhook is subscribed to."""
+  events: [FilterType!]!
+  """Retrieves the webhook's description."""
+  description: String!
+  """Retrieves the creation datetime of the webhook."""
+  createdAt: NaiveDateTime!
+  """Retrieves the ID of the organization the webhook belongs to."""
+  organizationId: UUID!
+  """Retrieves the last update datetime of the webhook."""
+  updatedAt: NaiveDateTime
 }
