@@ -1,0 +1,21 @@
+#import './drop.graphql'
+
+query GetHomePage {
+  me {
+    name
+    email
+    image
+    wallet {
+      address
+      mints {
+        id
+        address
+        collectionId
+      }
+    }
+  }
+
+  drops {
+    ...DropInfo
+  }
+}

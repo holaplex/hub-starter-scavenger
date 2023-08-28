@@ -42,6 +42,15 @@ declare module '*/collections.graphql' {
 }
     
 
+declare module '*/home.graphql' {
+  import { DocumentNode } from 'graphql';
+  const defaultDocument: DocumentNode;
+  export const GetHomePage: DocumentNode;
+
+  export default defaultDocument;
+}
+    
+
 declare module '*/me.graphql' {
   import { DocumentNode } from 'graphql';
   const defaultDocument: DocumentNode;

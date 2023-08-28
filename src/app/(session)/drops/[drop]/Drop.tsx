@@ -5,7 +5,8 @@ import { Drop as DropType } from '@/graphql.types';
 import { shorten } from '@/modules/wallet';
 import { MintDrop } from '@/mutations/mint.graphql';
 import { useMutation, useQuery } from '@apollo/client';
-import { GetDrop, GetDrops } from '@/queries/drop.graphql';
+import { GetDrop } from '@/queries/drop.graphql';
+import { GetHomePage } from '@/queries/home.graphql';
 import BounceLoader from 'react-spinners/BounceLoader';
 import Link from 'next/link';
 import clsx from 'clsx';
@@ -58,11 +59,8 @@ export default function Drop({ session, drop }: DropProps) {
     awaitRefetchQueries: true,
     refetchQueries: [
       {
-        query: GetDrops
+        query: GetHomePage
       },
-      {
-        query: GetMe
-      }
     ]
   });
 
