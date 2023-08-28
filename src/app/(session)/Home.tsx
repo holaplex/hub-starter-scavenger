@@ -77,11 +77,7 @@ export default function Home({ session }: HomeProps) {
                 <img
                   src={metadataJson?.image as string}
                   alt={metadataJson?.name as string}
-<<<<<<< Updated upstream
-                  className='absolute top-0 left-0 right-0 bottom-0 object-cover rounded-lg'
-=======
                   className="object-fit"
->>>>>>> Stashed changes
                 />
               </div>
             );
